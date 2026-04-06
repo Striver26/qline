@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use App\Enums\UserRole;
 
 #[Fillable(['name', 'email', 'password', 'business_id', 'role', 'phone', 'address', 'profile_completed'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -29,6 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
     }
 
@@ -50,5 +52,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function business()
     {
         return $this->belongsTo(\App\Models\Tenant\Business::class);
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->role === UserRole::BUSINESS_OWNER;
     }
 }

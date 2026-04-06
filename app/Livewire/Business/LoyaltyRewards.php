@@ -28,7 +28,7 @@ class LoyaltyRewards extends Component
 
     public function isOwner(): bool
     {
-        return auth()->user()->role === 'owner';
+        return auth()->user()->isOwner();
     }
 
     public function openForm()

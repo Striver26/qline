@@ -37,9 +37,11 @@
                     <flux:sidebar.item icon="users" :href="route('business.staff')" :current="request()->routeIs('business.staff')" wire:navigate>
                         {{ __('Staff') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="credit-card" :href="route('business.billing')" :current="request()->routeIs('business.billing')" wire:navigate>
-                        {{ __('Billing') }}
-                    </flux:sidebar.item>
+                    @if(auth()->user()->isOwner())
+                        <flux:sidebar.item icon="credit-card" :href="route('business.billing')" :current="request()->routeIs('business.billing')" wire:navigate>
+                            {{ __('Billing') }}
+                        </flux:sidebar.item>
+                    @endif
                     <flux:sidebar.item icon="cog-8-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate>
                         {{ __('Settings') }}
                     </flux:sidebar.item>

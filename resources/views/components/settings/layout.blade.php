@@ -2,7 +2,7 @@
     <div class="me-10 w-full pb-4 md:w-[220px]">
         <flux:navlist aria-label="{{ __('Settings') }}">
             <flux:navlist.item :href="route('profile.edit')" wire:navigate>{{ __('Profile') }}</flux:navlist.item>
-            @if(auth()->user()->role === 'owner')
+            @if(auth()->user()->isOwner())
                 <flux:navlist.item :href="route('business.settings')" wire:navigate>{{ __('Business') }}</flux:navlist.item>
             @endif
             <flux:navlist.item :href="route('security.edit')" wire:navigate>{{ __('Security') }}</flux:navlist.item>

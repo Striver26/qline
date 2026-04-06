@@ -63,7 +63,7 @@
 
                     <div class="mt-8 pt-6 border-t border-gray-100 w-full text-center">
                         <span class="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Powered by</span>
-                        <span class="text-xs font-black text-gray-400 ml-1">Q<span style="color: #14B8A6;">Line</span></span>
+                        <span class="ml-1"><x-app-logo /></span>
                     </div>
                 </div>
             </div>

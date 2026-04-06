@@ -10,7 +10,7 @@ class RequireOwnerRole
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()?->role !== 'owner') {
+        if (!$request->user()?->isOwner()) {
             abort(403, 'Only business owners can access this page.');
         }
 

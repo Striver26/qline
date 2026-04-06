@@ -48,7 +48,7 @@ class InviteController extends Controller
         auth()->login($user);
 
         // Redirect based on role
-        if ($user->role === 'platform_staff') {
+        if ($user->role->value === 'platform_staff') {
             return redirect()->route('admin.dashboard');
         }
 
