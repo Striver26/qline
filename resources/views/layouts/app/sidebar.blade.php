@@ -6,14 +6,23 @@
     <body class="min-h-screen bg-white dark:bg-zinc-800">
         <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+                <x-app-logo :sidebar="true" href="{{ route('business.dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
                 <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
+                    <flux:sidebar.item icon="home" :href="route('business.dashboard')" :current="request()->routeIs('business.dashboard')" wire:navigate>
+                        {{ __('Command Center') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="clock" :href="route('business.entries')" :current="request()->routeIs('business.entries')" wire:navigate>
+                        {{ __('History') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="qr-code" :href="route('business.qr')" :current="request()->routeIs('business.qr')" wire:navigate>
+                        {{ __('QR Code') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="chat-bubble-bottom-center-text" :href="route('business.feedback')" :current="request()->routeIs('business.feedback')" wire:navigate>
+                        {{ __('Feedback') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
@@ -21,13 +30,17 @@
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
-
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
+                <flux:sidebar.group :heading="__('Organization')" class="grid">
+                    <flux:sidebar.item icon="users" :href="route('business.staff')" :current="request()->routeIs('business.staff')" wire:navigate>
+                        {{ __('Staff') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="credit-card" :href="route('business.billing')" :current="request()->routeIs('business.billing')" wire:navigate>
+                        {{ __('Billing') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="cog-8-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate>
+                        {{ __('Settings') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />

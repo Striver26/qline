@@ -13,6 +13,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('settings/business', \App\Livewire\Business\BusinessSettings::class)
+        ->middleware(\App\Http\Middleware\RequireOwnerRole::class)
+        ->name('business.settings');
     Route::livewire('settings/appearance', Appearance::class)->name('appearance.edit');
 
     Route::livewire('settings/security', Security::class)
