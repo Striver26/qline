@@ -51,4 +51,16 @@ class Business extends Model
     {
         return $this->hasMany(\App\Models\Marketing\CustomerFeedback::class);
     }
+
+    // Loyalty reward programs
+    public function loyaltyRewards()
+    {
+        return $this->hasMany(\App\Models\Marketing\LoyaltyReward::class);
+    }
+
+    // Customer loyalty visits
+    public function loyaltyVisits()
+    {
+        return $this->hasMany(\App\Models\Marketing\LoyaltyVisit::class);
+    }
 }

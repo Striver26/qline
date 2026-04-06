@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->prefix('business')->name('business.')->
 
         Route::get('qr', \App\Livewire\Business\QrCode::class)->name('qr');
         Route::get('billing', \App\Livewire\Business\SubscriptionBilling::class)->name('billing');
+        Route::get('rewards', \App\Livewire\Business\LoyaltyRewards::class)->name('rewards');
     });
 });
 

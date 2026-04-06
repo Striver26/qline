@@ -24,6 +24,9 @@
                     <flux:sidebar.item icon="chat-bubble-bottom-center-text" :href="route('business.feedback')" :current="request()->routeIs('business.feedback')" wire:navigate>
                         {{ __('Feedback') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="gift" :href="route('business.rewards')" :current="request()->routeIs('business.rewards')" wire:navigate>
+                        {{ __('Rewards') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
