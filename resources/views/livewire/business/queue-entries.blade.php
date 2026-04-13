@@ -1,17 +1,23 @@
-<div class="space-y-8">
-
-    {{-- ═══════════ Header ═══════════ --}}
-    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+<div class="space-y-6">
+    <div class="page-header">
         <div>
-            <flux:subheading class="text-sm font-bold uppercase tracking-widest mb-1" style="color: #14B8A6;">History</flux:subheading>
-            <flux:heading size="xl" class="text-4xl font-black tracking-tight text-gray-900 dark:text-white leading-none">Ticket History</flux:heading>
+            <span class="page-kicker">Queue History</span>
+            <h1 class="page-title mt-4">Ticket Timeline</h1>
+            <p class="page-description mt-3">
+                Search by ticket or contact, filter by status, and quickly review how the queue moved through the day.
+            </p>
         </div>
-        <div class="flex items-center gap-3">
-            {{-- Search --}}
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search ticket or phone..." class="w-64" />
+    </div>
 
-            {{-- Status Filter --}}
-            <flux:select wire:model.live="status" class="w-44">
+    <div class="toolbar-card">
+        <div>
+            <p class="metric-label">Filters</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Find the exact ticket fast</h2>
+        </div>
+
+        <div class="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search ticket or phone..." class="w-full md:w-72" />
+            <flux:select wire:model.live="status" class="w-full md:w-48">
                 <option value="">All Statuses</option>
                 <option value="waiting">Waiting</option>
                 <option value="called">Called</option>
@@ -23,8 +29,7 @@
         </div>
     </div>
 
-    {{-- ═══════════ Table ═══════════ --}}
-    <flux:card class="p-0 overflow-hidden border-gray-100 dark:border-zinc-800">
+    <div class="glass-card !p-0 overflow-hidden">
         <flux:table>
             <flux:table.columns>
                 <flux:table.column class="px-6 py-4">Ticket</flux:table.column>
@@ -38,48 +43,46 @@
                 @forelse($entries as $entry)
                     <flux:table.row>
                         <flux:table.cell class="px-6 py-4">
-                            <flux:badge size="sm" class="font-black tracking-wider" style="background-color: #f0fdfa; color: #0d9488; border: none;">
-                                {{ $entry->ticket_code }}
-                            </flux:badge>
+                            <span class="badge-pill badge-pill--brand">{{ $entry->ticket_code }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell class="px-6 py-4">
-                            <flux:text class="font-semibold">{{ $entry->wa_id ?: 'Walk-in' }}</flux:text>
+                            <span class="font-semibold text-slate-800 dark:text-slate-100">{{ $entry->wa_id ?: 'Walk-in' }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell class="px-6 py-4">
                             @php
                                 $statusColors = [
-                                    'waiting'   => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
-                                    'called'    => 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
-                                    'serving'   => 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-                                    'completed' => 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-                                    'skipped'   => 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
-                                    'cancelled' => 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400',
+                                    'waiting' => 'border-brand-200 bg-brand-50 text-brand-700',
+                                    'called' => 'border-amber-200 bg-amber-50 text-amber-700',
+                                    'serving' => 'border-blue-200 bg-blue-50 text-blue-700',
+                                    'completed' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                                    'skipped' => 'border-orange-200 bg-orange-50 text-orange-700',
+                                    'cancelled' => 'border-rose-200 bg-rose-50 text-rose-700',
                                 ];
-                                $colorClass = $statusColors[$entry->status] ?? 'bg-gray-50 text-gray-700 dark:bg-zinc-800 dark:text-zinc-400';
+                                $colorClass = $statusColors[$entry->status] ?? 'border-slate-200 bg-slate-100 text-slate-700';
                             @endphp
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $colorClass }}">
+                            <span class="inline-flex items-center rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] {{ $colorClass }}">
                                 {{ $entry->status }}
                             </span>
                         </flux:table.cell>
 
                         <flux:table.cell class="px-6 py-4">
-                            <flux:text class="text-sm font-medium">{{ $entry->source === 'whatsapp' ? '🟢 WhatsApp' : '⚪ Walk-in' }}</flux:text>
+                            <span class="text-sm font-medium text-slate-600 dark:text-slate-300">{{ $entry->source === 'whatsapp' ? 'WhatsApp' : 'Walk-in' }}</span>
                         </flux:table.cell>
 
                         <flux:table.cell class="px-6 py-4 text-right">
-                            <flux:text class="text-sm font-medium">{{ $entry->created_at->format('M d, Y h:i A') }}</flux:text>
+                            <span class="text-sm font-medium text-slate-600 dark:text-slate-300">{{ $entry->created_at->format('M d, Y h:i A') }}</span>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
                         <flux:table.cell colspan="5" class="px-6 py-16 text-center">
-                            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-zinc-800">
-                                <flux:icon.clock class="w-7 h-7 text-gray-300 dark:text-zinc-700" />
+                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-slate-100 dark:bg-slate-800">
+                                <flux:icon.clock class="h-7 w-7 text-slate-300 dark:text-slate-600" />
                             </div>
-                            <flux:heading class="text-sm font-bold text-gray-600 dark:text-gray-400">No tickets found</flux:heading>
-                            <flux:subheading class="text-sm text-gray-400 dark:text-gray-500 mt-1">Try adjusting your search or filter.</flux:subheading>
+                            <h3 class="mt-4 text-lg font-bold tracking-[-0.04em] text-slate-700 dark:text-slate-200">No tickets found</h3>
+                            <p class="mt-2 text-sm text-slate-400">Try adjusting your search or status filter.</p>
                         </flux:table.cell>
                     </flux:table.row>
                 @endforelse
@@ -87,9 +90,9 @@
         </flux:table>
 
         @if($entries->hasPages())
-            <div class="px-6 py-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
+            <div class="border-t border-slate-200/70 px-6 py-4 dark:border-white/10">
                 {{ $entries->links() }}
             </div>
         @endif
-    </flux:card>
+    </div>
 </div>

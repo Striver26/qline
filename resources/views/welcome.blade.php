@@ -1,237 +1,250 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>{{ __('Welcome') }} - {{ config('app.name', 'Laravel') }}</title>
-
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+    @php($title = __('Welcome'))
+    @include('partials.head')
 </head>
+<body>
+    <div class="pointer-events-none fixed inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(20,159,124,0.24),transparent_40%),radial-gradient(circle_at_top_right,rgba(255,116,73,0.18),transparent_24%)]"></div>
 
-<body class="bg-slate-950 text-slate-200 antialiased">
+    <header class="relative z-10 px-4 pt-5 sm:px-6 lg:px-8">
+        <div class="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/60 bg-white/70 px-5 py-3 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.24)] backdrop-blur-xl">
+            <x-app-logo href="{{ route('home') }}" />
 
-    <!-- NAV -->
-    <header class="fixed top-0 w-full z-50 backdrop-blur bg-slate-950/70 border-b border-white/5">
-        <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-            <x-app-logo />
-
-            <nav class="hidden md:flex items-center gap-8 text-sm text-slate-400">
-                <a href="#features" class="hover:text-white transition">Features</a>
-                <a href="#benefits" class="hover:text-white transition">Benefits</a>
-                <a href="#pricing" class="hover:text-white transition">Pricing</a>
-
+            <nav class="hidden items-center gap-8 text-sm font-medium text-slate-500 md:flex">
+                <a href="#features" class="hover:text-slate-950">Features</a>
+                <a href="#workflow" class="hover:text-slate-950">Workflow</a>
+                <a href="#pricing" class="hover:text-slate-950">Pricing</a>
             </nav>
 
-            <a href="{{ route('register') }}"
-                class="bg-teal-400 text-black text-sm font-semibold px-5 py-2 rounded-full hover:opacity-90 transition">
-                Get Started
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('login') }}" class="hidden text-sm font-semibold text-slate-600 hover:text-slate-950 sm:inline-flex">
+                    Log in
+                </a>
+                <a href="{{ route('register') }}" class="btn-link-primary">
+                    Start Free Trial
+                </a>
+            </div>
         </div>
     </header>
 
-    <!-- HERO -->
-    <section class="relative pt-32 pb-24 px-6 text-center">
-
-        <!-- Glow -->
-        <div class="absolute inset-0 flex justify-center">
-            <div class="w-[700px] h-[400px] bg-teal-500/10 blur-[120px] rounded-full"></div>
-        </div>
-
-        <div class="relative max-w-4xl mx-auto">
-
-            <h1 class="text-5xl md:text-6xl font-bold tracking-tight leading-tight">
-                Your Queue System <br>
-                <span class="text-teal-400">Runs Itself</span>
-            </h1>
-
-            <p class="mt-6 text-lg text-slate-400 max-w-xl mx-auto">
-                Let customers join, wait, and get called automatically.
-                No shouting. No confusion. No lost customers.
-            </p>
-
-            <div class="mt-8 flex justify-center gap-4 flex-wrap">
-                <a href="{{ route('register') }}"
-                    class="px-8 py-3 bg-teal-400 text-black rounded-full font-semibold shadow-lg hover:scale-105 transition">
-                    Start Free Trial
-                </a>
-
-                <a href="#" class="px-8 py-3 border border-white/10 rounded-full hover:bg-white/5 transition">
-                    Watch Demo
-                </a>
-            </div>
-
-            <!-- TRUST -->
-            <div class="mt-12 text-sm text-slate-500">
-                Trusted by clinics, salons & service businesses
-            </div>
-
-        </div>
-    </section>
-
-    <!-- PROBLEM -->
-    <section class="py-20 px-6 text-center">
-        <div class="max-w-3xl mx-auto">
-
-            <h2 class="text-3xl font-semibold mb-6">
-                Still managing queues like this?
-            </h2>
-
-            <div class="space-y-3 text-slate-400">
-                <p>❌ Customers crowd your counter</p>
-                <p>❌ Staff shouting numbers manually</p>
-                <p>❌ People leave due to confusion</p>
-            </div>
-
-            <p class="mt-6 text-teal-400 font-semibold">
-                Qline fixes all of this instantly.
-            </p>
-        </div>
-    </section>
-
-    <!-- FEATURES -->
-    <section class="py-20 px-6" id="features">
-        <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-
-            <div class="p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-teal-400/30 transition">
-                <h3 class="font-semibold text-lg mb-2">Auto Queue Flow</h3>
-                <p class="text-slate-400 text-sm">
-                    Customers move through your queue automatically.
-                </p>
-            </div>
-
-            <div class="p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-teal-400/30 transition">
-                <h3 class="font-semibold text-lg mb-2">WhatsApp Notifications</h3>
-                <p class="text-slate-400 text-sm">
-                    Notify customers instantly when it's their turn.
-                </p>
-            </div>
-
-            <div class="p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-teal-400/30 transition">
-                <h3 class="font-semibold text-lg mb-2">QR Walk-In</h3>
-                <p class="text-slate-400 text-sm">
-                    No phone number required. Fast and simple.
-                </p>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- BENEFITS -->
-    <section class="py-20 px-6 text-center bg-slate-900/40 border-y border-white/5" id="benefits">
-        <div class="max-w-4xl mx-auto">
-
-            <h2 class="text-3xl font-semibold mb-10">
-                Why businesses choose Qline
-            </h2>
-
-            <div class="grid md:grid-cols-2 gap-6 text-slate-400 text-sm">
-                <div>✔ No app required</div>
-                <div>✔ Works with WhatsApp</div>
-                <div>✔ Setup in minutes</div>
-                <div>✔ Reduce waiting frustration</div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- PRICING -->
-    <section class="py-24 px-6 text-center">
-        <div class="max-w-5xl mx-auto">
-
-            <h2 class="text-3xl font-semibold mb-12" id="pricing">
-                Simple pricing
-            </h2>
-
-            <div class="grid md:grid-cols-2 gap-8">
-
-                <!-- PLAN 1 -->
-                <div class="p-8 rounded-2xl border border-white/10 bg-white/5">
-                    <h3 class="text-lg font-semibold mb-2">Starter</h3>
-
-                    <p class="text-slate-400 text-sm mb-6">
-                        Perfect for small businesses
+    <main class="relative z-10 px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+        <section class="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div class="space-y-6">
+                <span class="page-kicker">Queue management for modern service businesses</span>
+                <div class="space-y-4">
+                    <h1 class="text-5xl font-bold tracking-[-0.08em] text-slate-950 sm:text-6xl lg:text-7xl">
+                        Your front desk feels calmer when the queue runs itself.
+                    </h1>
+                    <p class="max-w-2xl text-lg text-slate-600">
+                        Qline helps customers join from a QR code or WhatsApp, track their turn live, and arrive only when they are actually needed.
                     </p>
+                </div>
 
-                    <div class="text-4xl font-bold text-teal-400 mb-6">
-                        RM19 <span class="text-sm text-slate-500">/day</span>
-                    </div>
-
-                    <ul class="space-y-2 text-sm text-slate-400 mb-6">
-                        <li>✔ Unlimited queue</li>
-                        <li>✔ WhatsApp integration</li>
-                        <li>✔ QR system</li>
-                    </ul>
-
-                    <a href="{{ route('register') }}"
-                        class="block py-3 rounded-full border border-white/10 hover:bg-white/5">
-                        Start Free Trial
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ route('register') }}" class="btn-link-primary">
+                        Launch Your Queue
+                    </a>
+                    <a href="#workflow" class="btn-link-secondary">
+                        See How It Works
                     </a>
                 </div>
 
-                <!-- PLAN 2 -->
-                <div class="p-8 rounded-2xl border border-teal-400 bg-teal-400/5 relative">
-
-                    <div
-                        class="absolute -top-3 left-1/2 -translate-x-1/2 text-xs bg-teal-400 text-black px-3 py-1 rounded-full">
-                        MOST POPULAR
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <div class="soft-card">
+                        <p class="metric-label">Best For</p>
+                        <p class="mt-3 text-lg font-bold text-slate-950">Clinics, salons, counters</p>
                     </div>
-
-                    <h3 class="text-lg font-semibold mb-2">Pro</h3>
-
-                    <p class="text-slate-400 text-sm mb-6">
-                        For growing businesses
-                    </p>
-
-                    <div class="text-4xl font-bold text-teal-400 mb-6">
-                        RM400 <span class="text-sm text-slate-500">/month</span>
+                    <div class="soft-card">
+                        <p class="metric-label">Customer Join</p>
+                        <p class="mt-3 text-lg font-bold text-slate-950">QR code or WhatsApp</p>
                     </div>
-
-                    <ul class="space-y-2 text-sm text-slate-400 mb-6">
-                        <li>✔ Everything in Starter</li>
-                        <li>✔ Customer feedback</li>
-                        <li>✔ Loyalty rewards</li>
-                    </ul>
-
-                    <a href="{{ route('register') }}"
-                        class="block py-3 rounded-full bg-teal-400 text-black font-semibold hover:opacity-90">
-                        Start Free Trial
-                    </a>
+                    <div class="soft-card">
+                        <p class="metric-label">Team Benefit</p>
+                        <p class="mt-3 text-lg font-bold text-slate-950">Less shouting, less confusion</p>
+                    </div>
                 </div>
-
             </div>
 
-        </div>
-    </section>
-    <section class="py-24 px-6 text-center">
-        <h2 class="text-3xl font-bold mb-4">
-            Stop managing crowds.
-        </h2>
+            <div class="glass-card overflow-hidden !p-0">
+                <div class="mesh-accent p-8 text-white">
+                    <div class="flex items-center justify-between">
+                        <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-white/90">
+                            Live Queue Preview
+                        </span>
+                        <span class="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur-sm">
+                            Queue Open
+                        </span>
+                    </div>
 
-        <p class="text-slate-500 mb-6">
-            Start managing queues the smart way.
-        </p>
+                    <div class="mt-10 rounded-[1.8rem] border border-white/15 bg-white/10 p-6 backdrop-blur-sm">
+                        <p class="text-sm text-white/70">Now serving</p>
+                        <p class="mt-3 text-7xl font-bold tracking-[-0.08em]">A102</p>
 
-        <a href="{{ route('register') }}" class="px-8 py-3 bg-teal-400 text-black rounded-full">
-            Start Now
-        </a>
-    </section>
+                        <div class="mt-8 grid gap-4 sm:grid-cols-2">
+                            <div class="rounded-[1.3rem] border border-white/12 bg-black/10 p-4">
+                                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/60">Waiting</p>
+                                <p class="mt-2 text-3xl font-bold tracking-[-0.05em]">18</p>
+                            </div>
+                            <div class="rounded-[1.3rem] border border-white/12 bg-black/10 p-4">
+                                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/60">Avg. Wait</p>
+                                <p class="mt-2 text-3xl font-bold tracking-[-0.05em]">12 min</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- FOOTER -->
-    <footer class="py-10 text-center text-sm text-slate-400">
-        © 2026 Qline · Built in Malaysia 🇲🇾
+                <div class="grid gap-4 p-6 sm:grid-cols-3">
+                    <div class="rounded-[1.4rem] bg-brand-50 p-4">
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-brand-700">Join</p>
+                        <p class="mt-2 text-sm font-semibold text-slate-800">Customers scan or message a code.</p>
+                    </div>
+                    <div class="rounded-[1.4rem] bg-slate-100 p-4">
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Track</p>
+                        <p class="mt-2 text-sm font-semibold text-slate-800">They watch their turn live from the phone.</p>
+                    </div>
+                    <div class="rounded-[1.4rem] bg-coral-50 p-4">
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-coral-700">Call</p>
+                        <p class="mt-2 text-sm font-semibold text-slate-800">Staff move the line with one tap.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mx-auto mt-16 max-w-7xl" id="features">
+            <div class="page-header">
+                <div>
+                    <span class="page-kicker">Why teams switch</span>
+                    <h2 class="mt-4 text-4xl font-bold tracking-[-0.06em] text-slate-950">Designed to be obvious for both staff and customers.</h2>
+                </div>
+                <p class="page-description">
+                    The interface is built so customers know where to go next and staff can act without digging through cluttered controls.
+                </p>
+            </div>
+
+            <div class="mt-8 grid gap-5 lg:grid-cols-3">
+                <article class="feature-card">
+                    <span class="badge-pill badge-pill--brand">Live control</span>
+                    <h3 class="mt-5 text-2xl font-bold tracking-[-0.05em] text-slate-950">A cleaner command center for staff.</h3>
+                    <p class="mt-3 text-sm text-slate-600">
+                        Open or close the queue, call the next customer, and keep the line moving from one focused dashboard.
+                    </p>
+                </article>
+                <article class="feature-card">
+                    <span class="badge-pill">WhatsApp ready</span>
+                    <h3 class="mt-5 text-2xl font-bold tracking-[-0.05em] text-slate-950">Customers get updates where they already are.</h3>
+                    <p class="mt-3 text-sm text-slate-600">
+                        Let people join and receive timely notifications without forcing them to install another app.
+                    </p>
+                </article>
+                <article class="feature-card">
+                    <span class="badge-pill">Built for retention</span>
+                    <h3 class="mt-5 text-2xl font-bold tracking-[-0.05em] text-slate-950">Feedback and loyalty stay connected.</h3>
+                    <p class="mt-3 text-sm text-slate-600">
+                        Capture service quality, reward repeat visits, and turn queue traffic into returning customers.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <section class="mx-auto mt-16 max-w-7xl" id="workflow">
+            <div class="glass-card">
+                <div class="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+                    <div>
+                        <span class="page-kicker">Workflow</span>
+                        <h2 class="mt-4 text-4xl font-bold tracking-[-0.06em] text-slate-950">Three steps from crowded counter to smooth handoff.</h2>
+                        <p class="mt-4 text-sm text-slate-600">
+                            Qline gives customers confidence while your team stays focused on service instead of managing uncertainty.
+                        </p>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div class="soft-card">
+                            <p class="text-sm font-semibold text-brand-700">1. Join instantly</p>
+                            <p class="mt-3 text-sm text-slate-600">A QR standee or WhatsApp keyword gets customers into the queue in seconds.</p>
+                        </div>
+                        <div class="soft-card">
+                            <p class="text-sm font-semibold text-brand-700">2. Wait clearly</p>
+                            <p class="mt-3 text-sm text-slate-600">They see position, estimated wait time, and live status without asking staff.</p>
+                        </div>
+                        <div class="soft-card">
+                            <p class="text-sm font-semibold text-brand-700">3. Serve smoothly</p>
+                            <p class="mt-3 text-sm text-slate-600">Your team calls the next customer with one tap and keeps momentum steady.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mx-auto mt-16 max-w-7xl" id="pricing">
+            <div class="page-header">
+                <div>
+                    <span class="page-kicker">Simple pricing</span>
+                    <h2 class="mt-4 text-4xl font-bold tracking-[-0.06em] text-slate-950">Pick the pace that matches your business.</h2>
+                </div>
+                <p class="page-description">
+                    Start light for short bursts or go all-in with the monthly plan when queues are a daily part of your operation.
+                </p>
+            </div>
+
+            <div class="mt-8 grid gap-6 lg:grid-cols-2">
+                <article class="pricing-card">
+                    <span class="badge-pill">Starter</span>
+                    <h3 class="mt-6 text-3xl font-bold tracking-[-0.05em] text-slate-950">Daily Pass</h3>
+                    <p class="mt-3 text-sm text-slate-600">Perfect for businesses that want flexibility without a long commitment.</p>
+                    <p class="mt-8 text-5xl font-bold tracking-[-0.07em] text-slate-950">RM 15<span class="ml-2 text-base font-semibold text-slate-400">/day</span></p>
+                    <ul class="mt-8 space-y-3 text-sm text-slate-600">
+                        <li>Unlimited queue entries for the day</li>
+                        <li>WhatsApp notifications</li>
+                        <li>Printable QR standee</li>
+                    </ul>
+                    <a href="{{ route('register') }}" class="btn-link-secondary mt-8 w-full">Try the Daily Pass</a>
+                </article>
+
+                <article class="pricing-card mesh-accent text-white">
+                    <div class="absolute right-6 top-6 rounded-full bg-white/15 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] backdrop-blur-sm">
+                        Best Value
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-[-0.05em]">Monthly Ultimate</h3>
+                    <p class="mt-3 text-sm text-white/78">For service teams that run queues every day and want all the growth tools included.</p>
+                    <p class="mt-8 text-5xl font-bold tracking-[-0.07em]">RM 400<span class="ml-2 text-base font-semibold text-white/65">/month</span></p>
+                    <ul class="mt-8 space-y-3 text-sm text-white/82">
+                        <li>Everything in Daily Pass</li>
+                        <li>Feedback dashboard</li>
+                        <li>Loyalty rewards and retention tools</li>
+                    </ul>
+                    <a href="{{ route('register') }}" class="mt-8 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-0.5 hover:bg-slate-100">
+                        Start the Monthly Plan
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <section class="mx-auto mt-16 max-w-7xl">
+            <div class="glass-card mesh-accent text-center text-white">
+                <span class="rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-white/90 backdrop-blur-sm">
+                    Ready when you are
+                </span>
+                <h2 class="mt-6 text-4xl font-bold tracking-[-0.06em] sm:text-5xl">
+                    Stop managing crowds. Start managing flow.
+                </h2>
+                <p class="mx-auto mt-4 max-w-2xl text-sm text-white/80 sm:text-base">
+                    Give your customers a smoother wait and your team a calmer service rhythm with a queue system that actually feels modern.
+                </p>
+                <div class="mt-8 flex flex-wrap justify-center gap-3">
+                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-700 transition duration-300 hover:-translate-y-0.5 hover:bg-slate-100">
+                        Start Free Trial
+                    </a>
+                    <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:bg-white/15">
+                        Log In
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="relative z-10 px-4 pb-8 text-center text-sm text-slate-500 sm:px-6 lg:px-8">
+        © 2026 Qline. Designed to keep queues moving with less stress.
     </footer>
-
 </body>
-
 </html>

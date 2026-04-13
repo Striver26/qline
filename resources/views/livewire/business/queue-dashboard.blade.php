@@ -1,161 +1,96 @@
-<div class="space-y-10 max-w-6xl mx-auto" wire:poll.10s>
-
-    {{-- ═══════════ Header ═══════════ --}}
-    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
-
-        <div class="space-y-1">
-            <flux:subheading class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#14B8A6]">
-                {{ $business->name ?? 'Your Business' }}
-            </flux:subheading>
-
-            <flux:heading size="xl" class="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
-                Command Center
-            </flux:heading>
+<div class="space-y-8" wire:poll.10s>
+    <div class="page-header">
+        <div>
+            <span class="page-kicker">{{ $business->name ?? 'Your Business' }}</span>
+            <h1 class="page-title mt-4">Command Center</h1>
+            <p class="page-description mt-3">
+                Open or pause the queue, monitor the current load, and keep the next customer handoff clear for staff.
+            </p>
         </div>
 
-        <div class="flex items-center gap-3">
-
-            {{-- Status --}}
-            <div
-                class="px-4 py-2.5 rounded-2xl bg-white dark:bg-zinc-900 shadow-sm flex items-center gap-2.5
-                {{ $business->queue_status === 'open' ? 'ring-1 ring-emerald-200 dark:ring-emerald-900/40' : 'ring-1 ring-rose-200 dark:ring-rose-900/40' }}">
-
-                @if($business->queue_status === 'open')
-                    <span class="relative flex h-2.5 w-2.5">
-                        <span class="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-70"></span>
-                        <span class="relative rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                    </span>
-                    <span class="text-sm font-bold text-emerald-600">Queue Open</span>
-                @else
-                    <span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
-                    <span class="text-sm font-bold text-rose-600">Queue Closed</span>
-                @endif
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="badge-pill {{ $business->queue_status === 'open' ? 'badge-pill--brand' : '' }}">
+                <span class="h-2.5 w-2.5 rounded-full {{ $business->queue_status === 'open' ? 'bg-brand-500' : 'bg-rose-500' }}"></span>
+                {{ $business->queue_status === 'open' ? 'Queue Open' : 'Queue Closed' }}
             </div>
 
-            {{-- Toggle --}}
-            <flux:button wire:click="toggleQueue"
-                class="px-6 py-2.5 rounded-2xl font-extrabold shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-all"
-                style="{{ $business->queue_status === 'open'
-    ? ''
-    : 'background: #14B8A6; border-color: #14B8A6; color: white;' }}"
-                :variant="$business->queue_status === 'open' ? 'danger' : 'primary'">
-                <flux:icon class="w-4 h-4 mr-2" :name="$business->queue_status === 'open' ? 'x-mark' : 'bolt'" />
+            <flux:button
+                wire:click="toggleQueue"
+                class="rounded-full px-5 py-2.5 font-semibold shadow-[0_24px_60px_-32px_rgba(15,23,42,0.4)]"
+                style="{{ $business->queue_status === 'open' ? '' : 'background: linear-gradient(135deg, #149f7c, #0f7f66); border-color: #149f7c; color: white;' }}"
+                :variant="$business->queue_status === 'open' ? 'danger' : 'primary'"
+            >
+                <flux:icon class="mr-2 h-4 w-4" :name="$business->queue_status === 'open' ? 'x-mark' : 'bolt'" />
                 {{ $business->queue_status === 'open' ? 'Close Queue' : 'Open Queue' }}
             </flux:button>
-
         </div>
     </div>
 
-    {{-- ═══════════ Stats ═══════════ --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-
-        {{-- Waiting --}}
-        <flux:card
-            class="p-6 rounded-2xl border-0 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-            <div
-                class="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-br from-[#14B8A6]/5">
-            </div>
-
-            <div class="flex items-center justify-between relative">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Waiting</p>
-                    <p class="text-4xl font-black text-gray-900 dark:text-white">
-                        {{ count($this->waitingEntries) }}
-                    </p>
-                </div>
-
-                <div
-                    class="w-14 h-14 rounded-2xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
-                    <flux:icon.users class="w-7 h-7 text-[#14B8A6]" />
+    <div class="grid gap-5 xl:grid-cols-3">
+        <div class="metric-card">
+            <p class="metric-label">Waiting Right Now</p>
+            <div class="mt-5 flex items-end justify-between gap-4">
+                <p class="metric-value mt-0">{{ count($this->waitingEntries) }}</p>
+                <div class="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-brand-50 text-brand-700">
+                    <flux:icon.users class="h-7 w-7" />
                 </div>
             </div>
+        </div>
 
-            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#14B8A6] to-teal-300"></div>
-        </flux:card>
-
-        {{-- Served --}}
-        <flux:card
-            class="p-6 rounded-2xl border-0 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-            <div
-                class="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-br from-indigo-500/5">
-            </div>
-
-            <div class="flex items-center justify-between relative">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Served Today</p>
-                    <p class="text-4xl font-black text-gray-900 dark:text-white">
-                        {{ max(0, ($business->entries_today ?? 0) - count($this->waitingEntries)) }}
-                    </p>
-                </div>
-
-                <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/30">
-                    <flux:icon.check-circle class="w-7 h-7 text-indigo-500" />
+        <div class="metric-card">
+            <p class="metric-label">Served Today</p>
+            <div class="mt-5 flex items-end justify-between gap-4">
+                <p class="metric-value mt-0">{{ max(0, ($business->entries_today ?? 0) - count($this->waitingEntries)) }}</p>
+                <div class="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-coral-50 text-coral-700">
+                    <flux:icon.check-circle class="h-7 w-7" />
                 </div>
             </div>
+        </div>
 
-            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-400 to-violet-500"></div>
-        </flux:card>
+        <flux:button
+            wire:click="callNext"
+            :disabled="$business->queue_status !== 'open'"
+            class="mesh-accent relative flex h-full min-h-[11rem] flex-col items-start justify-between rounded-[1.8rem] p-6 text-left text-white shadow-[0_34px_90px_-42px_rgba(15,159,124,0.7)] transition duration-300 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+            <div>
+                <p class="text-[0.72rem] font-semibold uppercase tracking-[0.26em] text-white/70">Next Action</p>
+                <p class="mt-4 text-4xl font-bold tracking-[-0.06em]">Call Next</p>
+            </div>
 
-        {{-- Call Next --}}
-        <flux:button wire:click="callNext" :disabled="$business->queue_status !== 'open'"
-            class="p-6 rounded-[1.5rem] text-left transition-all duration-300 shadow-lg hover:shadow-2xl active:scale-[0.97] group"
-            style="{{ $business->queue_status === 'open'
-    ? 'background: linear-gradient(135deg, #14B8A6, #0d9488); color:white;'
-    : 'background:#f3f4f6; color:#9ca3af;' }}">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p
-                        class="text-xs uppercase tracking-widest font-bold {{ $business->queue_status === 'open' ? 'text-white/70' : 'text-gray-400' }}">
-                        Next Action
-                    </p>
-                    <p class="text-3xl font-black">Call Next</p>
-                </div>
-
-                <div class="w-14 h-14 rounded-2xl flex items-center justify-center
-                    {{ $business->queue_status === 'open' ? 'bg-white/20' : 'bg-gray-200 dark:bg-zinc-800' }}">
-                    <flux:icon.arrow-right class="w-7 h-7 group-hover:translate-x-1 transition" />
-                </div>
+            <div class="flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-white/15 bg-white/10 backdrop-blur-sm">
+                <flux:icon.arrow-right class="h-6 w-6" />
             </div>
         </flux:button>
-
     </div>
 
-    {{-- ═══════════ Lists ═══════════ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-        {{-- Currently Serving --}}
-        <flux:card class="overflow-hidden border-0 shadow-sm rounded-2xl">
-
-            <div class="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center">
-                <flux:heading class="text-base font-extrabold">Currently Serving</flux:heading>
-                <span class="text-xs font-bold text-[#14B8A6] bg-emerald-50 px-2.5 py-1 rounded-lg">
-                    {{ count($this->activeEntries) }} active
-                </span>
+    <div class="grid gap-6 xl:grid-cols-2">
+        <div class="glass-card !p-0">
+            <div class="flex items-center justify-between border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
+                <div>
+                    <p class="metric-label">Active Tickets</p>
+                    <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Currently Serving</h2>
+                </div>
+                <span class="badge-pill badge-pill--brand">{{ count($this->activeEntries) }} active</span>
             </div>
 
-            <div class="p-5 space-y-3">
+            <div class="space-y-3 p-5">
                 @forelse($this->activeEntries as $entry)
-
-                    <div
-                        class="flex justify-between items-center p-4 rounded-2xl bg-gray-50/70 dark:bg-zinc-800/40 hover:bg-white dark:hover:bg-zinc-800 transition group">
-
+                    <div class="soft-card flex items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black shadow"
-                                style="background: linear-gradient(135deg, #14B8A6, #0d9488);">
+                            <div class="mesh-accent flex h-14 w-14 items-center justify-center rounded-[1.15rem] text-sm font-bold text-white shadow-[0_24px_60px_-32px_rgba(15,159,124,0.65)]">
                                 {{ $entry->ticket_code }}
                             </div>
-
                             <div>
-                                <p class="text-sm font-bold">
-                                    {{ $entry->wa_id ? '📱 ' . $entry->wa_id : '🏢 Walk-in' }}
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    {{ $entry->wa_id ? $entry->wa_id : 'Walk-in customer' }}
                                 </p>
-                                <span class="text-xs font-semibold text-gray-400">
+                                <p class="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">
                                     {{ ucfirst($entry->status) }}
-                                </span>
+                                </p>
                             </div>
                         </div>
 
-                        <div class="flex gap-2 opacity-60 group-hover:opacity-100 transition items-center">
+                        <div class="flex items-center gap-2">
                             @if($entry->wa_id)
                                 @php
                                     $reward = \App\Models\Marketing\EarnedReward::where('business_id', $business->id)
@@ -165,78 +100,65 @@
                                 @endphp
 
                                 @if($reward)
-                                    <flux:button wire:click="redeemReward({{ $reward->id }})"
+                                    <flux:button
+                                        wire:click="redeemReward({{ $reward->id }})"
                                         wire:confirm="Redeem {{ $reward->reward->reward_value }} for this customer?"
-                                        size="sm" class="px-3 rounded-xl bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200">
-                                        🎁 Redeem
+                                        size="sm"
+                                        class="rounded-full border border-amber-200 bg-amber-50 px-3 text-amber-700"
+                                    >
+                                        Redeem
                                     </flux:button>
                                 @endif
                             @endif
 
-                            <flux:button wire:click="markDone({{ $entry->id }})" size="sm" variant="ghost"
-                                class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
-                                <flux:icon.check class="w-4 h-4" />
+                            <flux:button wire:click="markDone({{ $entry->id }})" size="sm" variant="ghost" class="rounded-full bg-brand-50 px-3 text-brand-700">
+                                <flux:icon.check class="h-4 w-4" />
                             </flux:button>
 
-                            <flux:button wire:click="skip({{ $entry->id }})" size="sm" variant="ghost"
-                                class="p-2.5 rounded-xl bg-rose-50 text-rose-600">
-                                <flux:icon.forward class="w-4 h-4" />
+                            <flux:button wire:click="skip({{ $entry->id }})" size="sm" variant="ghost" class="rounded-full bg-rose-50 px-3 text-rose-600">
+                                <flux:icon.forward class="h-4 w-4" />
                             </flux:button>
                         </div>
-
                     </div>
-
                 @empty
-                    <div class="text-center py-16 text-gray-400">
-                        No active tickets
+                    <div class="p-12 text-center text-slate-400">
+                        No active tickets right now.
                     </div>
                 @endforelse
             </div>
-        </flux:card>
+        </div>
 
-        {{-- Waiting --}}
-        <flux:card class="overflow-hidden border-0 shadow-sm rounded-2xl">
-
-            <div class="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center">
-                <flux:heading class="text-base font-extrabold">Waiting Line</flux:heading>
-                <span class="text-xs font-bold bg-gray-100 px-2.5 py-1 rounded-lg">
-                    {{ count($this->waitingEntries) }} in queue
-                </span>
+        <div class="glass-card !p-0">
+            <div class="flex items-center justify-between border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
+                <div>
+                    <p class="metric-label">Upcoming</p>
+                    <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Waiting Line</h2>
+                </div>
+                <span class="badge-pill">{{ count($this->waitingEntries) }} in queue</span>
             </div>
 
-            <div class="p-5 space-y-2.5">
+            <div class="space-y-3 p-5">
                 @forelse($this->waitingEntries as $entry)
-
-                    <div
-                        class="flex items-center p-3.5 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition group">
-
-                        <div class="w-9 h-9 flex items-center justify-center rounded-xl font-black text-xs
-                                {{ $loop->first ? 'text-white' : 'bg-gray-100 text-gray-500' }}"
-                            style="{{ $loop->first ? 'background: linear-gradient(135deg,#14B8A6,#0d9488)' : '' }}">
+                    <div class="soft-card flex items-center gap-4">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-[1rem] {{ $loop->first ? 'mesh-accent text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300' }}">
                             #{{ $entry->position }}
                         </div>
 
-                        <div class="ml-4 flex-1 flex justify-between">
-                            <div>
-                                <p class="text-sm font-bold">{{ $entry->ticket_code }}</p>
-                                <p class="text-xs text-gray-400">
-                                    {{ $entry->source === 'whatsapp' ? 'WhatsApp' : 'Walk-in' }}
-                                </p>
-                            </div>
-
-                            <span class="text-xs text-gray-400 opacity-0 group-hover:opacity-100">
-                                {{ $entry->created_at->diffForHumans() }}
-                            </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $entry->ticket_code }}</p>
+                            <p class="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">
+                                {{ $entry->source === 'whatsapp' ? 'WhatsApp' : 'Walk-in' }}
+                            </p>
                         </div>
 
+                        <p class="text-xs text-slate-400">{{ $entry->created_at->diffForHumans() }}</p>
                     </div>
-
                 @empty
-                    <div class="text-center py-16 text-gray-400">
-                        Queue is empty
+                    <div class="p-12 text-center text-slate-400">
+                        Queue is empty.
                     </div>
                 @endforelse
             </div>
-        </flux:card>
+        </div>
     </div>
 </div>

@@ -1,124 +1,133 @@
-<div class="space-y-8">
-
-    {{-- ═══════════ Header ═══════════ --}}
-    <div>
-        <flux:subheading class="text-sm font-bold uppercase tracking-widest mb-1" style="color: #14B8A6;">Team</flux:subheading>
-        <flux:heading size="xl" class="text-4xl font-black tracking-tight text-gray-900 dark:text-white leading-none">Staff Management</flux:heading>
+<div class="space-y-6">
+    <div class="page-header">
+        <div>
+            <span class="page-kicker">Team Setup</span>
+            <h1 class="page-title mt-4">Staff Management</h1>
+            <p class="page-description mt-3">
+                Invite teammates, keep roles clear, and make sure the right people can keep the queue moving.
+            </p>
+        </div>
     </div>
 
     @if (session()->has('success'))
-        <div class="rounded-2xl border p-4 shadow-sm flex items-center space-x-3 bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30">
-            <div class="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center bg-[#14B8A6]">
-                <flux:icon.check class="w-4 h-4 text-white" />
-            </div>
-            <flux:text class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ session('success') }}</flux:text>
+        <div class="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700 shadow-sm">
+            {{ session('success') }}
         </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {{-- ▸ Invite Form --}}
+    <div class="grid gap-6 xl:grid-cols-3">
         @if(auth()->user()->isOwner())
-            <div class="lg:col-span-1 space-y-6">
-                <!-- Invite Form Card -->
-                <flux:card class="p-0 overflow-hidden border-gray-100 dark:border-zinc-800">
-                    <div class="px-7 py-5 border-b border-gray-100 dark:border-zinc-800 flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
-                            <flux:icon.envelope class="w-4 h-4 text-[#14B8A6]" />
-                        </div>
-                        <flux:heading class="text-base font-extrabold text-gray-900 dark:text-white">Invite New Staff</flux:heading>
-                    </div>
-                    <div class="p-6">
-                        <form wire:submit="generateInvite" class="space-y-5">
-                            <flux:field>
-                                <flux:label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Email Address</flux:label>
-                                <flux:input type="email" wire:model="email" placeholder="staff@example.com" class="font-medium" />
-                                <flux:error name="email" />
-                            </flux:field>
+            <div class="space-y-6 xl:col-span-1">
+                <div class="glass-card">
+                    <span class="page-kicker">Invite Staff</span>
+                    <h2 class="mt-4 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Add a new teammate</h2>
 
-                            <flux:button type="submit" variant="primary" class="w-full font-bold shadow-md rounded-xl py-3" style="background: #14B8A6; border-color: #14B8A6;">
-                                <flux:icon.link class="w-4 h-4 mr-2" />
-                                Generate Invite Link
-                            </flux:button>
-                        </form>
-                    </div>
-                </flux:card>
+                    <form wire:submit="generateInvite" class="mt-6 space-y-5">
+                        <flux:field>
+                            <flux:label>{{ __('Email Address') }}</flux:label>
+                            <flux:input type="email" wire:model="email" placeholder="staff@example.com" class="font-medium" />
+                            <flux:error name="email" />
+                        </flux:field>
+
+                        <flux:button type="submit" variant="primary" class="mesh-accent w-full rounded-[1.2rem] py-3 font-semibold text-white">
+                            <flux:icon.link class="mr-2 h-4 w-4" />
+                            Generate Invite Link
+                        </flux:button>
+                    </form>
+                </div>
 
                 @if(count($invitations) > 0)
-                    <flux:card class="p-0 overflow-hidden border-gray-100 dark:border-zinc-800">
-                        <div class="px-7 py-4 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-                            <flux:subheading class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pending Invites</flux:subheading>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-[#14B8A6]">{{ count($invitations) }}</span>
+                    <div class="glass-card !p-0 overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
+                            <div>
+                                <p class="metric-label">Pending</p>
+                                <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Invitations</h2>
+                            </div>
+                            <span class="badge-pill badge-pill--brand">{{ count($invitations) }}</span>
                         </div>
-                        <div class="divide-y divide-gray-50 dark:divide-zinc-800/50 max-h-72 overflow-y-auto">
+
+                        <div class="divide-y divide-slate-200/70 dark:divide-white/10">
                             @foreach($invitations as $invite)
-                                <div class="p-5">
-                                    <div class="flex justify-between items-center mb-2.5">
-                                        <flux:text class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ $invite->email }}</flux:text>
-                                        <flux:button wire:click="revokeInvite({{ $invite->id }})" variant="ghost" size="sm" class="text-[10px] text-rose-500 hover:text-rose-700 font-bold uppercase tracking-wider p-0 h-auto">Revoke</flux:button>
+                                <div class="space-y-4 px-6 py-5">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div>
+                                            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ $invite->email }}</p>
+                                            <p class="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">
+                                                Expires {{ $invite->expires_at->diffForHumans() }}
+                                            </p>
+                                        </div>
+
+                                        <flux:button wire:click="revokeInvite({{ $invite->id }})" variant="ghost" size="sm" class="rounded-full px-3 text-rose-600">
+                                            Revoke
+                                        </flux:button>
                                     </div>
-                                    <div class="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-2.5 flex items-center">
-                                        <code class="text-[10px] text-gray-500 dark:text-gray-400 truncate flex-1 font-semibold">{{ route('invite.show', $invite->token) }}</code>
+
+                                    <div class="rounded-[1.2rem] bg-slate-100/90 px-4 py-3 text-xs font-medium text-slate-600 dark:bg-slate-900/70 dark:text-slate-300">
+                                        {{ route('invite.show', $invite->token) }}
                                     </div>
-                                    <flux:text class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 font-semibold">Expires {{ $invite->expires_at->diffForHumans() }}</flux:text>
                                 </div>
                             @endforeach
                         </div>
-                    </flux:card>
+                    </div>
                 @endif
             </div>
         @endif
 
-        {{-- ▸ Staff List --}}
-        <div class="{{ auth()->user()->isOwner() ? 'lg:col-span-2' : 'lg:col-span-3' }}">
-            <flux:card class="p-0 overflow-hidden border-gray-100 dark:border-zinc-800">
-                <div class="px-7 py-5 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-zinc-800">
-                            <flux:icon.users class="w-4 h-4 text-gray-500" />
-                        </div>
-                        <flux:heading class="text-base font-extrabold text-gray-900 dark:text-white">Active Team</flux:heading>
+        <div class="{{ auth()->user()->isOwner() ? 'xl:col-span-2' : 'xl:col-span-3' }}">
+            <div class="glass-card !p-0 overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
+                    <div>
+                        <p class="metric-label">Team Roster</p>
+                        <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Active Team</h2>
                     </div>
-                    <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400">{{ count($staff) }} members</span>
+                    <span class="badge-pill">{{ count($staff) }} members</span>
                 </div>
-                <div class="divide-y divide-gray-50 dark:divide-zinc-800/50">
+
+                <div class="divide-y divide-slate-200/70 dark:divide-white/10">
                     @forelse($staff as $member)
-                        <div class="px-7 py-5 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-zinc-800/20 transition-colors group">
-                            <div class="flex items-center">
-                                <flux:avatar :name="$member->name" :initials="$member->initials()" class="w-11 h-11 rounded-2xl shadow-sm text-white font-black text-sm" style="background: linear-gradient(135deg, #14B8A6, #0d9488);" />
-                                <div class="ml-4">
-                                    <div class="text-sm font-bold text-gray-900 dark:text-white flex items-center">
-                                        {{ $member->name }}
+                        <div class="flex items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-white/35 dark:hover:bg-white/5">
+                            <div class="flex min-w-0 items-center gap-4">
+                                <flux:avatar :name="$member->name" :initials="$member->initials()" class="h-12 w-12 rounded-[1rem] bg-brand-500 text-white" />
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $member->name }}</p>
                                         @if($member->id === auth()->id())
-                                            <flux:badge size="sm" class="ml-2 font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/20 text-[#14B8A6] border-0">You</flux:badge>
+                                            <span class="badge-pill badge-pill--brand">You</span>
                                         @endif
                                     </div>
-                                    <flux:text class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $member->email }}</flux:text>
+                                    <p class="truncate text-sm text-slate-500 dark:text-slate-400">{{ $member->email }}</p>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <flux:badge size="sm" class="font-bold uppercase tracking-wider border-0 {{ $member->isOwner() ? 'bg-emerald-50 dark:bg-emerald-900/20 text-[#14B8A6]' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400' }}">
+
+                            <div class="flex items-center gap-3">
+                                <span class="badge-pill {{ $member->isOwner() ? 'badge-pill--brand' : '' }}">
                                     {{ str_replace('_', ' ', Str::title($member->role->value ?? $member->role)) }}
-                                </flux:badge>
+                                </span>
+
                                 @if($member->id !== auth()->id() && auth()->user()->isOwner())
-                                    <flux:button wire:click="deleteStaff({{ $member->id }})" wire:confirm="Are you sure you want to remove this staff member?"
-                                            variant="ghost" size="sm" class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors opacity-0 group-hover:opacity-100">
+                                    <flux:button
+                                        wire:click="deleteStaff({{ $member->id }})"
+                                        wire:confirm="Are you sure you want to remove this staff member?"
+                                        variant="ghost"
+                                        size="sm"
+                                        class="rounded-full bg-rose-50 px-3 text-rose-600"
+                                    >
                                         <flux:icon.trash class="h-4 w-4" />
                                     </flux:button>
                                 @endif
                             </div>
                         </div>
                     @empty
-                        <div class="py-16 px-4 text-center">
-                            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-zinc-800">
-                                <flux:icon.user-plus class="w-7 h-7 text-gray-300 dark:text-zinc-700" />
+                        <div class="px-6 py-16 text-center">
+                            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-slate-100 dark:bg-slate-800">
+                                <flux:icon.user-plus class="h-8 w-8 text-slate-300 dark:text-slate-600" />
                             </div>
-                            <flux:heading class="text-sm font-bold text-gray-600 dark:text-gray-400">No staff members yet</flux:heading>
-                            <flux:subheading class="text-sm text-gray-400 dark:text-gray-500 mt-1">Send an invite to get started.</flux:subheading>
+                            <h3 class="mt-5 text-xl font-bold tracking-[-0.04em] text-slate-700 dark:text-slate-200">No staff members yet</h3>
+                            <p class="mt-2 text-sm text-slate-400">Send an invite to bring the rest of the team in.</p>
                         </div>
                     @endforelse
                 </div>
-            </flux:card>
+            </div>
         </div>
     </div>
 </div>

@@ -27,142 +27,152 @@
             }
         })
     "
-    class="max-w-md mx-auto space-y-6"
+    class="mx-auto max-w-4xl space-y-8"
 >
-    {{-- Notification Sound --}}
     <audio x-ref="chime" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-    {{-- Header --}}
     <div class="text-center">
-        <h1 class="text-xl font-black text-slate-900 tracking-tight">{{ $business->name }}</h1>
-        @if($entry->status === \App\Enums\QueueStatus::WAITING->value)
-            <div class="mt-1 flex items-center justify-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
-                <span class="text-[10px] font-black uppercase tracking-widest text-teal-600">Track your turn</span>
-            </div>
-        @endif
+        <span class="page-kicker mx-auto">{{ $business->name }}</span>
+        <h2 class="mt-4 text-4xl font-bold tracking-[-0.06em] text-slate-950 sm:text-5xl">{{ $entry->ticket_code }}</h2>
+        <p class="mt-3 text-sm text-slate-600 sm:text-base">
+            Keep this page open. Your position and status will update automatically every few seconds.
+        </p>
     </div>
 
-    {{-- Main Ticket Card --}}
-    <div class="brand-card rounded-[2.5rem] p-10 text-center relative overflow-hidden">
-        {{-- Progress Bar (at top) --}}
-        <div class="absolute top-0 left-0 right-0 h-1.5 bg-slate-100">
-            <div class="h-full bg-teal-500 transition-all duration-1000" 
-                 style="width: {{ 
+    <div class="glass-card overflow-hidden !p-0">
+        <div class="h-2 w-full bg-slate-100">
+            <div
+                class="h-full bg-linear-to-r from-brand-500 via-brand-400 to-coral-400 transition-all duration-700"
+                style="width: {{
                     match($entry->status) {
-                        'waiting' => '33%',
-                        'called', 'serving' => '66%',
+                        'waiting' => '36%',
+                        'called', 'serving' => '72%',
                         'completed' => '100%',
-                        default => '0%'
+                        default => '18%'
                     }
-                 }}"></div>
+                }}"
+            ></div>
         </div>
 
-        <div class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Your ID</div>
-        <div class="text-6xl font-black tracking-tighter text-slate-900 mb-8">
-            {{ $entry->ticket_code }}
-        </div>
+        <div class="grid gap-6 p-6 lg:grid-cols-[0.9fr_1.1fr] lg:p-8">
+            <div class="soft-card mesh-accent text-white">
+                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-white/75">Current status</p>
+                <div class="mt-5 inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white backdrop-blur-sm {{ $this->statusColor }}">
+                    {{ $this->statusLabel }}
+                </div>
 
-        {{-- Status Pill --}}
-        <div class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border-2 border-slate-100 font-black text-xs uppercase tracking-widest {{ $this->statusColor }}">
-            {{ $this->statusLabel }}
-        </div>
-
-        <div class="mt-10 pt-8 border-t border-slate-50">
-            @if($entry->status === \App\Enums\QueueStatus::WAITING->value)
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <div class="text-2xl font-black text-slate-900">{{ $this->positionInfo['position'] }}</div>
-                        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Position</div>
+                <div class="mt-8 grid gap-4 sm:grid-cols-2">
+                    <div class="rounded-[1.3rem] border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/70">Ticket</p>
+                        <p class="mt-3 text-3xl font-bold tracking-[-0.05em]">{{ $entry->ticket_code }}</p>
                     </div>
-                    <div>
-                        <div class="text-2xl font-black text-slate-900">~{{ $this->positionInfo['estimated_wait_mins'] }}m</div>
-                        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Est. Time</div>
+                    <div class="rounded-[1.3rem] border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/70">Refresh</p>
+                        <p class="mt-3 text-3xl font-bold tracking-[-0.05em]">4s</p>
                     </div>
                 </div>
-            @elseif($entry->status === \App\Enums\QueueStatus::CALLED->value)
-                <div class="space-y-4">
-                    <div class="w-16 h-16 bg-teal-500 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-lg shadow-teal-200">
-                        🔔
+            </div>
+
+            <div class="space-y-5">
+                @if($entry->status === \App\Enums\QueueStatus::WAITING->value)
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="public-stat">
+                            <p class="metric-label">Position</p>
+                            <p class="metric-value">{{ $this->positionInfo['position'] }}</p>
+                        </div>
+                        <div class="public-stat">
+                            <p class="metric-label">Estimated Wait</p>
+                            <p class="metric-value">~{{ $this->positionInfo['estimated_wait_mins'] }}m</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="text-xl font-black text-slate-900">It's Your Turn!</h2>
-                        <p class="text-sm text-slate-500 mt-1">Please come to the counter now.</p>
+
+                    <div class="soft-card">
+                        <h3 class="text-2xl font-bold tracking-[-0.04em] text-slate-950">You are in line.</h3>
+                        <p class="mt-3 text-sm text-slate-600">
+                            You do not need to stay right at the counter. Keep this page open and we will update you when it is your turn.
+                        </p>
+                    </div>
+                @elseif($entry->status === \App\Enums\QueueStatus::CALLED->value)
+                    <div class="rounded-[1.8rem] border border-brand-200 bg-brand-50 p-6 text-center shadow-[0_24px_60px_-36px_rgba(15,159,124,0.35)]">
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-brand-500 text-3xl text-white shadow-lg shadow-brand-300/40">
+                            !
+                        </div>
+                        <h3 class="mt-5 text-3xl font-bold tracking-[-0.05em] text-slate-950">It is your turn.</h3>
+                        <p class="mt-3 text-sm text-slate-600">Please head to the counter now.</p>
                         @if($entry->counter_id)
-                            <div class="mt-4 px-4 py-2 bg-slate-900 text-white inline-block rounded-xl font-black text-lg">
+                            <div class="mt-5 inline-flex rounded-full bg-slate-950 px-5 py-2 text-sm font-semibold text-white">
                                 Counter {{ $entry->counter_id }}
                             </div>
                         @endif
                     </div>
-                </div>
-            @elseif($entry->status === \App\Enums\QueueStatus::COMPLETED->value)
-                 <div class="space-y-4">
-                    <div class="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto">
-                        ✅
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-black text-slate-900">All Done</h2>
-                        <p class="text-sm text-slate-500 mt-1">Thank you for visiting us!</p>
+                @elseif($entry->status === \App\Enums\QueueStatus::COMPLETED->value)
+                    <div class="rounded-[1.8rem] border border-emerald-200 bg-emerald-50 p-6 text-center">
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-emerald-500 text-3xl text-white shadow-lg shadow-emerald-200">
+                            ✓
+                        </div>
+                        <h3 class="mt-5 text-3xl font-bold tracking-[-0.05em] text-slate-950">All done.</h3>
+                        <p class="mt-3 text-sm text-slate-600">Thanks for visiting. We hope the queue felt smooth.</p>
                         @if(!$entry->customerFeedback)
-                            <a href="{{ url("/q/{$business->slug}/feedback/{$entry->cancel_token}") }}"
-                               class="inline-block mt-4 btn-teal px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest">
+                            <a
+                                href="{{ url("/q/{$business->slug}/feedback/{$entry->cancel_token}") }}"
+                                class="btn-link-primary mt-6"
+                            >
                                 Leave Feedback
                             </a>
                         @endif
                     </div>
-                </div>
-            @else
-                <div class="py-4">
-                    <p class="text-sm text-slate-400">Ticket status: {{ ucfirst($entry->status) }}</p>
-                </div>
-            @endif
+                @else
+                    <div class="soft-card">
+                        <h3 class="text-2xl font-bold tracking-[-0.04em] text-slate-950">Status updated</h3>
+                        <p class="mt-3 text-sm text-slate-600">
+                            Ticket status: {{ ucfirst($entry->status) }}.
+                        </p>
+                    </div>
+                @endif
+
+                @if($this->loyaltyPoints)
+                    <div class="soft-card">
+                        <p class="metric-label">Loyalty Progress</p>
+                        <p class="mt-4 text-lg font-bold tracking-[-0.03em] text-slate-950">
+                            @if($this->loyaltyPoints['has_reward'])
+                                Reward ready: {{ $this->loyaltyPoints['reward_name'] }}
+                            @elseif($this->loyaltyPoints['next_reward_in'])
+                                {{ $this->loyaltyPoints['next_reward_in'] }} more visit(s) for {{ $this->loyaltyPoints['next_reward_name'] }}
+                            @else
+                                Visit #{{ $this->loyaltyPoints['visits'] }}
+                            @endif
+                        </p>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 
-    {{-- Loyalty Card (Solid Style) --}}
-    @if($this->loyaltyPoints)
-        <div class="brand-card rounded-2xl p-5 flex items-center justify-between border-l-4 border-l-teal-500">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-2xl shadow-inner border border-slate-100">
-                    {{ $this->loyaltyPoints['has_reward'] ? '🎁' : '⭐' }}
-                </div>
-                <div class="text-left">
-                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Royalty Perk</div>
-                    <div class="text-sm font-bold text-slate-900">
-                        @if($this->loyaltyPoints['has_reward'])
-                            <span class="text-teal-600">Gift Ready: {{ $this->loyaltyPoints['reward_name'] }}</span>
-                        @elseif($this->loyaltyPoints['next_reward_in'])
-                            <span class="text-slate-600">{{ $this->loyaltyPoints['next_reward_in'] }} to go ({{ $this->loyaltyPoints['next_reward_name'] }})</span>
-                        @else
-                            <span class="text-slate-500">Visit #{{ $this->loyaltyPoints['visits'] }}</span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            @if($this->loyaltyPoints['has_reward'])
-                <div class="px-2 py-1 bg-teal-500 text-white rounded font-black text-[9px] uppercase tracking-tighter">Claim Now</div>
-            @endif
-        </div>
-    @endif
-
-    {{-- Cancellation (Clean UI) --}}
     @if($entry->status === \App\Enums\QueueStatus::WAITING->value)
         <div class="text-center" x-data="{ confirming: false }">
-            <button x-show="!confirming" @click="confirming = true" 
-                    class="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition border-b border-transparent hover:border-rose-200 py-1">
-                Cancel My Ticket
+            <button
+                x-show="!confirming"
+                @click="confirming = true"
+                class="text-sm font-semibold text-slate-400 transition hover:text-rose-500"
+            >
+                Cancel my ticket
             </button>
-            <div x-show="confirming" x-cloak class="mt-2 text-center p-4 bg-rose-50 border border-rose-100 rounded-2xl animate-in zoom-in-95">
-                <p class="text-xs font-black text-rose-600 uppercase mb-3">Cancel this ticket?</p>
-                <div class="flex justify-center gap-3">
-                    <button wire:click="cancelTicket" @click="confirming = false" class="px-4 py-2 bg-rose-500 text-white text-[10px] font-black uppercase rounded-lg shadow-sm">Confirm</button>
-                    <button @click="confirming = false" class="px-4 py-2 text-slate-400 text-[10px] font-black uppercase">No, Nevermind</button>
+
+            <div x-show="confirming" x-cloak class="mx-auto mt-4 max-w-md rounded-[1.6rem] border border-rose-200 bg-rose-50 p-5 text-center">
+                <p class="text-sm font-semibold text-rose-700">Are you sure you want to leave the queue?</p>
+                <div class="mt-4 flex justify-center gap-3">
+                    <button wire:click="cancelTicket" @click="confirming = false" class="rounded-full bg-rose-600 px-5 py-2 text-sm font-semibold text-white">
+                        Confirm Cancel
+                    </button>
+                    <button @click="confirming = false" class="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-500">
+                        Keep My Ticket
+                    </button>
                 </div>
             </div>
         </div>
     @endif
 
-    <p class="text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-        Updating every 4s
+    <p class="text-center text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-slate-400">
+        Updating automatically every 4 seconds
     </p>
 </div>
