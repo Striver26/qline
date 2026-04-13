@@ -21,15 +21,15 @@
                     <ol class="space-y-5 text-sm text-gray-600 dark:text-gray-400">
                         <li class="flex items-start">
                             <span class="flex-shrink-0 w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs text-white mr-3.5 mt-0.5" style="background: linear-gradient(135deg, #14B8A6, #0d9488);">1</span>
-                            <flux:text class="font-medium leading-relaxed">Customers scan the QR code with their phone camera.</flux:text>
+                            <flux:text class="font-medium leading-relaxed">Customers scan the QR code to open your <strong>Live Queue Page</strong>.</flux:text>
                         </li>
                         <li class="flex items-start">
                             <span class="flex-shrink-0 w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs text-white mr-3.5 mt-0.5" style="background: linear-gradient(135deg, #14B8A6, #0d9488);">2</span>
-                            <flux:text class="font-medium leading-relaxed">WhatsApp opens with the text <strong class="font-black text-[#14B8A6]">"JOIN {{ $joinCode }}"</strong> pre-filled.</flux:text>
+                            <flux:text class="font-medium leading-relaxed">They choose to join via <strong>WhatsApp</strong> or directly <strong>on the Web</strong>.</flux:text>
                         </li>
                         <li class="flex items-start">
                             <span class="flex-shrink-0 w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs text-white mr-3.5 mt-0.5" style="background: linear-gradient(135deg, #14B8A6, #0d9488);">3</span>
-                            <flux:text class="font-medium leading-relaxed">They hit <strong>Send</strong> and are instantly added to your queue!</flux:text>
+                            <flux:text class="font-medium leading-relaxed">They get their ticket and can <strong>track their turn live</strong> on their phone!</flux:text>
                         </li>
                     </ol>
                 </div>
@@ -54,8 +54,8 @@
 
                 {{-- QR Code --}}
                 <div class="px-8 py-10 flex flex-col items-center">
-                    <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 mb-8 inline-block">
-                        {!! $svg !!}
+                    <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 mb-8 inline-flex select-none pointer-events-none w-56 h-56 items-center justify-center [&>svg]:w-full [&>svg]:h-full">
+                        {!! $qrCode !!}
                     </div>
 
                     <div class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Or text this to join</div>

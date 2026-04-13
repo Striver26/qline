@@ -48,9 +48,9 @@
                                 @endfor
                             </div>
 
-                            @if($feedback->comments)
+                            @if($feedback->comment)
                                 <div class="mt-3 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-700/50 leading-relaxed font-medium">
-                                    "{{ $feedback->comments }}"
+                                    "{{ $feedback->comment }}"
                                 </div>
                             @else
                                 <flux:text class="mt-2 text-sm text-gray-400 italic">No comment provided.</flux:text>

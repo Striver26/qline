@@ -90,7 +90,7 @@ class LoyaltyRewards extends Component
         $reward->update(['is_active' => !$reward->is_active]);
     }
 
-    public function delete($id)
+    public function removeReward($id)
     {
         if (! $this->isOwner()) return;
 

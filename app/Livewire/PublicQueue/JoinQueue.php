@@ -11,6 +11,7 @@ use App\Enums\QueueStatus;
 class JoinQueue extends Component
 {
     public Business $business;
+    public ?\App\Models\Marketing\LoyaltyReward $activeReward = null;
     public ?QueueEntry $ticket = null;
     public string $phone = '';
     public bool $joined = false;
@@ -19,6 +20,11 @@ class JoinQueue extends Component
     public function mount($slug)
     {
         $this->business = Business::where('slug', $slug)->firstOrFail();
+
+        $this->activeReward = \App\Models\Marketing\LoyaltyReward::where('business_id', $this->business->id)
+            ->where('is_active', true)
+            ->orderBy('required_visits', 'asc')
+            ->first();
     }
 
     #[\Livewire\Attributes\Computed]
@@ -43,11 +49,12 @@ class JoinQueue extends Component
 
         try {
             if ($waId) {
-                $this->ticket = $queueService->join($this->business, $waId);
+                $ticket = $queueService->join($this->business, $waId);
             } else {
-                $this->ticket = $queueService->addManual($this->business);
+                $ticket = $queueService->addManual($this->business);
             }
-            $this->joined = true;
+
+            return redirect()->route('public.status', ['slug' => $this->business->slug, 'id' => $ticket->id]);
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
         }

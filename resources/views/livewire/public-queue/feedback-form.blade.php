@@ -1,100 +1,65 @@
-<div class="max-w-md mx-auto space-y-6">
+<div class="max-w-md mx-auto">
+    <div class="brand-card rounded-[2.5rem] p-10 text-center">
+        @if($submitted || $alreadySubmitted)
+            <div class="space-y-6 py-10">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto shadow-inner">
+                    ✨
+                </div>
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900 tracking-tight text-center">Thank You!</h2>
+                    <p class="text-slate-500 mt-2 font-medium">Your feedback helps us improve.</p>
+                </div>
+                <div class="pt-6">
+                    <button @click="window.close()" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition underline underline-offset-4">
+                        Close Window
+                    </button>
+                </div>
+            </div>
+        @else
+            <div class="space-y-8">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">How was your visit?</h1>
+                    <p class="text-sm text-slate-500 mt-2">Rate your experience at <span class="font-bold text-slate-900">{{ $business->name }}</span></p>
+                </div>
 
-    {{-- Business info --}}
-    <div class="text-center">
-        <h1 class="text-2xl font-bold text-white">{{ $business->name }}</h1>
-        <p class="text-xs text-slate-500 uppercase tracking-widest mt-1">Rate Your Experience</p>
+                <form wire:submit.prevent="submitFeedback" class="space-y-8">
+                    {{-- Star Rating --}}
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="flex gap-2">
+                            @for($i = 1; $i <= 5; $i++)
+                                <button type="button" wire:click="$set('rating', {{ $i }})" 
+                                        class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all duration-200 
+                                               {{ $rating >= $i ? 'bg-amber-400 scale-110 shadow-lg shadow-amber-200' : 'bg-slate-100 text-slate-300 transform-none hover:bg-slate-200' }}">
+                                    ⭐
+                                </button>
+                            @endfor
+                        </div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            {{ match($rating) { 1 => 'Poor', 2 => 'Fair', 3 => 'Good', 4 => 'Very Good', 5 => 'Excellent', default => 'Tap a star' } }}
+                        </p>
+                    </div>
+
+                    {{-- Comment --}}
+                    <div class="space-y-2 text-left">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Comments (Optional)</label>
+                        <textarea wire:model="comment" rows="4" placeholder="Tell us more about your visit..."
+                                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition outline-none font-medium resize-none"></textarea>
+                    </div>
+
+                    @error('rating')
+                        <p class="text-xs font-bold text-rose-500">Please select a star rating</p>
+                    @enderror
+
+                    <button type="submit" 
+                            class="btn-teal w-full py-5 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-teal-500/20">
+                        Submit Feedback
+                    </button>
+                </form>
+            </div>
+        @endif
     </div>
 
-    @if($alreadySubmitted)
-        {{-- Already submitted --}}
-        <div class="glass-card rounded-3xl p-8 text-center">
-            <div class="text-5xl mb-4">💬</div>
-            <h2 class="text-xl font-bold text-teal-400">Already Reviewed</h2>
-            <p class="text-sm text-slate-500 mt-2">You've already submitted feedback for this visit. Thank you!</p>
-        </div>
-
-    @elseif($submitted)
-        {{-- Success --}}
-        <div class="glass-card rounded-3xl p-8 text-center glow-teal">
-            <div class="text-5xl mb-4">🙏</div>
-            <h2 class="text-xl font-bold text-teal-400">Thank You!</h2>
-            <p class="text-sm text-slate-400 mt-2">Your feedback helps {{ $business->name }} improve their service.</p>
-
-            <div class="flex justify-center gap-1 mt-4">
-                @for($i = 1; $i <= 5; $i++)
-                    <span class="text-2xl {{ $i <= $rating ? '' : 'opacity-20' }}">⭐</span>
-                @endfor
-            </div>
-        </div>
-
-    @else
-        {{-- Ticket reference --}}
-        <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
-            <div>
-                <div class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ticket</div>
-                <div class="text-lg font-black text-white">{{ $entry->ticket_code }}</div>
-            </div>
-            <div class="text-right">
-                <div class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Visited</div>
-                <div class="text-sm font-semibold text-slate-400">{{ $entry->created_at->format('d M Y') }}</div>
-            </div>
-        </div>
-
-        {{-- Rating form --}}
-        <div class="glass-card rounded-2xl p-6 space-y-6">
-
-            {{-- Star rating --}}
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-4 text-center">
-                    How was your experience?
-                </label>
-                <div class="flex justify-center gap-2">
-                    @for($i = 1; $i <= 5; $i++)
-                        <button wire:click="setRating({{ $i }})" type="button"
-                                class="text-4xl transition-all duration-200 hover:scale-125 focus:outline-none {{ $i <= $rating ? 'scale-110' : 'opacity-30 hover:opacity-60' }}">
-                            ⭐
-                        </button>
-                    @endfor
-                </div>
-                @if($rating > 0)
-                    <div class="text-center mt-2">
-                        <span class="text-sm font-bold {{ $rating >= 4 ? 'text-teal-400' : ($rating >= 3 ? 'text-amber-400' : 'text-red-400') }}">
-                            @switch($rating)
-                                @case(1) Terrible @break
-                                @case(2) Poor @break
-                                @case(3) Okay @break
-                                @case(4) Great @break
-                                @case(5) Amazing! @break
-                            @endswitch
-                        </span>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Comment --}}
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">
-                    Any comments? <span class="text-slate-600">(optional)</span>
-                </label>
-                <textarea wire:model="comment" rows="3" maxlength="500" placeholder="Tell us more about your experience..."
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-teal-400/50 focus:outline-none focus:ring-1 focus:ring-teal-400/30 transition text-sm resize-none"></textarea>
-                <div class="text-right text-[10px] text-slate-600 mt-1">{{ strlen($comment) }}/500</div>
-            </div>
-
-            {{-- Validation error --}}
-            @error('rating')
-                <p class="text-sm text-red-400">Please select a rating.</p>
-            @enderror
-
-            {{-- Submit --}}
-            <button wire:click="submitFeedback"
-                    wire:loading.attr="disabled"
-                    @if($rating === 0) disabled @endif
-                    class="w-full py-3.5 bg-teal-400 text-black font-bold rounded-xl hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed">
-                <span wire:loading.remove>Submit Feedback</span>
-                <span wire:loading>Submitting...</span>
-            </button>
-        </div>
-    @endif
+    <div class="text-center mt-10">
+        <span class="qline-logo" style="font-size: 0.9rem;">Q<em>line</em></span>
+    </div>
 </div>

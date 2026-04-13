@@ -155,7 +155,24 @@
                             </div>
                         </div>
 
-                        <div class="flex gap-2 opacity-60 group-hover:opacity-100 transition">
+                        <div class="flex gap-2 opacity-60 group-hover:opacity-100 transition items-center">
+                            @if($entry->wa_id)
+                                @php
+                                    $reward = \App\Models\Marketing\EarnedReward::where('business_id', $business->id)
+                                        ->where('wa_id', $entry->wa_id)
+                                        ->where('status', 'available')
+                                        ->first();
+                                @endphp
+
+                                @if($reward)
+                                    <flux:button wire:click="redeemReward({{ $reward->id }})"
+                                        wire:confirm="Redeem {{ $reward->reward->reward_value }} for this customer?"
+                                        size="sm" class="px-3 rounded-xl bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200">
+                                        🎁 Redeem
+                                    </flux:button>
+                                @endif
+                            @endif
+
                             <flux:button wire:click="markDone({{ $entry->id }})" size="sm" variant="ghost"
                                 class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
                                 <flux:icon.check class="w-4 h-4" />

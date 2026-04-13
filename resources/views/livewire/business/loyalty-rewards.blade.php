@@ -123,8 +123,8 @@
                                 <flux:icon.play class="w-3.5 h-3.5 mr-1" /> Resume
                             @endif
                         </flux:button>
-                        <flux:button wire:click="delete({{ $reward->id }})" size="sm" variant="ghost"
-                            wire:confirm="Are you sure you want to delete this reward?"
+                        <flux:button wire:click="removeReward({{ $reward->id }})" size="sm" variant="ghost"
+                            onclick="return confirm('Are you sure you want to delete this reward?')"
                             class="text-xs font-bold rounded-lg text-rose-600 hover:text-rose-700">
                             <flux:icon.trash class="w-3.5 h-3.5 mr-1" /> Delete
                         </flux:button>

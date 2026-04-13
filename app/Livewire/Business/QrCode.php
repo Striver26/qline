@@ -11,26 +11,23 @@ class QrCode extends Component
     public function render()
     {
         $business = auth()->user()->business;
-        $joinCode = $business->join_code ?? 'SETUP_REQUIRED';
-
-        $qlinePhone = config('qline.phone_number', '6012345678'); 
-        $whatsappText = urlencode("JOIN {$joinCode}");
-        $url = "https://wa.me/{$qlinePhone}?text={$whatsappText}";
-
-        // Simplest safe wrapper for all v4/v5 chillerlan versions
-        $svgRaw = (new QrLib())->render($url);
+        $url = route('public.join', ['slug' => $business->slug]);
         
-        $svg = $svgRaw;
-        // if base64 encoded SVG
-        if (str_starts_with($svgRaw, 'data:image/svg+xml')) {
-            $decoded = base64_decode(substr($svgRaw, strpos($svgRaw, ',') + 1));
-            if (strpos($decoded, '<svg') !== false) {
-                $svg = substr($decoded, strpos($decoded, '<svg'));
-            }
-        }
+        // Define options explicitly
+        $options = new \chillerlan\QRCode\QROptions([
+            'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class,
+            'outputBase64' => false, // Raw SVG
+            'svgAddXmlHeader' => false,
+            'connectPaths' => true,
+        ]);
 
-        return view('livewire.business.qr-code', compact('business', 'svg', 'url', 'joinCode'))
-            ->layout('layouts.app');
+        $qrCode = (new \chillerlan\QRCode\QRCode($options))->render($url);
+        
+        return view('livewire.business.qr-code', [
+            'business' => $business,
+            'qrCode' => $qrCode,
+            'url' => $url,
+            'joinCode' => $business->join_code ?? 'SETUP_REQUIRED'
+        ])->layout('layouts.app');
     }
 }
-

@@ -1,33 +1,38 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
 <head>
     @include('partials.head')
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
         .public-bg {
-            background: linear-gradient(135deg, #0f172a 0%, #0c1220 50%, #0a1628 100%);
             min-height: 100vh;
         }
-        .glow-teal {
-            box-shadow: 0 0 60px rgba(20, 184, 166, 0.15), 0 0 120px rgba(20, 184, 166, 0.05);
+        .brand-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(20px);
+        .btn-teal {
+            background-color: #14B8A6;
+            color: white;
+            transition: all 0.2s;
         }
-        .pulse-dot {
-            animation: pulse-glow 2s ease-in-out infinite;
+        .btn-teal:hover {
+            background-color: #0d9488;
+            transform: translateY(-1px);
         }
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(20, 184, 166, 0); }
+        .btn-teal:active {
+            transform: translateY(0);
         }
         .qline-logo {
-            font-family: 'Syne', sans-serif;
             font-weight: 800;
-            font-size: 1.2rem;
-            color: #ededea;
+            font-size: 1.25rem;
+            color: #0f172a;
             text-decoration: none;
             letter-spacing: -0.02em;
         }
@@ -35,25 +40,26 @@
             font-style: normal;
             color: #14B8A6;
         }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="public-bg text-slate-200 antialiased">
+<body class="public-bg antialiased">
 
-    {{-- Minimal header --}}
-    <header class="fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/60 border-b border-white/5">
-        <div class="max-w-3xl mx-auto flex items-center justify-between px-5 py-3">
+    {{-- Header --}}
+    <header class="bg-white border-b border-slate-200">
+        <div class="max-w-3xl mx-auto flex items-center justify-between px-5 py-4">
             <span class="qline-logo">Q<em>line</em></span>
-            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Queue System</span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Queue System</span>
         </div>
     </header>
 
     {{-- Main content --}}
-    <main class="pt-20 pb-12 px-4">
+    <main class="pt-8 pb-12 px-4">
         {{ $slot }}
     </main>
 
     {{-- Footer --}}
-    <footer class="text-center text-xs text-slate-600 py-6">
+    <footer class="text-center text-xs text-slate-400 py-6 border-t border-slate-100 mt-auto">
         Powered by <span class="qline-logo" style="font-size: 0.8rem;">Q<em>line</em></span>
     </footer>
 

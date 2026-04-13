@@ -75,6 +75,22 @@ class QueueDashboard extends Component
         $this->business->refresh();
     }
 
+    public function redeemReward($rewardId)
+    {
+        $reward = \App\Models\Marketing\EarnedReward::where('business_id', $this->business->id)
+            ->where('id', $rewardId)
+            ->where('status', 'available')
+            ->first();
+
+        if ($reward) {
+            $reward->update([
+                'status' => 'redeemed',
+                'redeemed_at' => now(),
+            ]);
+            $this->dispatch('reward-redeemed');
+        }
+    }
+
     public function render()
     {
         return view('livewire.business.queue-dashboard')
