@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->prefix('business')->name('business.')->
         Route::get('entries', \App\Livewire\Business\QueueEntries::class)->name('entries');
         Route::get('feedback', \App\Livewire\Business\CustomerFeedback::class)->name('feedback');
         Route::get('staff', \App\Livewire\Business\StaffManagement::class)->name('staff');
+        Route::get('analytics', \App\Livewire\Business\AnalyticsDashboard::class)->name('analytics');
 
         Route::get('qr', \App\Livewire\Business\QrCode::class)->name('qr');
         Route::get('billing', \App\Livewire\Business\SubscriptionBilling::class)->name('billing');
@@ -42,6 +43,7 @@ Route::middleware(['auth', 'verified'])->prefix('business')->name('business.')->
 // Admin Platform Panel
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', \App\Livewire\Admin\Dashboard::class)->name('dashboard');
+    Route::get('analytics', \App\Livewire\Admin\AnalyticsDashboard::class)->name('analytics');
     Route::get('users', \App\Livewire\Admin\Users\UsersIndex::class)->name('users');
     Route::get('businesses', \App\Livewire\Admin\Businesses\BusinessesIndex::class)->name('businesses');
     Route::get('subscriptions', \App\Livewire\Admin\Subscriptions\SubscriptionsIndex::class)->name('subscriptions');

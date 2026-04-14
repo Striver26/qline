@@ -26,6 +26,9 @@
                         <flux:sidebar.item icon="building-storefront" :href="route('admin.businesses')" :current="request()->routeIs('admin.businesses')" wire:navigate>
                             {{ __('Tenants') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="chart-bar" :href="route('admin.analytics')" :current="request()->routeIs('admin.analytics')" wire:navigate>
+                            {{ __('Analytics') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="users" :href="route('admin.users')" :current="request()->routeIs('admin.users')" wire:navigate>
                             {{ __('Users') }}
                         </flux:sidebar.item>
@@ -70,6 +73,9 @@
                     <flux:sidebar.group :heading="__('Growth')" class="grid">
                         <flux:sidebar.item icon="gift" :href="route('business.rewards')" :current="request()->routeIs('business.rewards')" wire:navigate>
                             {{ __('Rewards') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="chart-pie" :href="route('business.analytics')" :current="request()->routeIs('business.analytics')" wire:navigate>
+                            {{ __('Analytics') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="users" :href="route('business.staff')" :current="request()->routeIs('business.staff')" wire:navigate>
                             {{ __('Staff') }}
