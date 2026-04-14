@@ -1,7 +1,7 @@
 <div
     wire:poll.4s
     x-data="{
-        status: @entangle('entry.status'),
+        status: @entangle('currentStatus'),
         init() {
             window.addEventListener('ticket-joined', (e) => {
                 let tickets = JSON.parse(localStorage.getItem('qline_active_tickets') || '{}');
@@ -30,6 +30,15 @@
     class="mx-auto max-w-4xl space-y-8"
 >
     <audio x-ref="chime" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    @if($business->queue_status === 'paused')
+        <div class="rounded-[1.4rem] border border-amber-200 bg-amber-50 px-5 py-4 text-center shadow-[0_12px_40px_-24px_rgba(245,158,11,0.5)]">
+            <p class="text-sm font-semibold text-amber-800">
+                <span class="mr-2 inline-block h-2 w-2 rounded-full bg-amber-500"></span>
+                Queue Paused: {{ $business->pause_reason ?? 'Short break' }}
+            </p>
+        </div>
+    @endif
 
     <div class="text-center">
         <span class="page-kicker mx-auto">{{ $business->name }}</span>

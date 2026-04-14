@@ -12,6 +12,7 @@ class TicketStatus extends Component
 {
     public Business $business;
     public QueueEntry $entry;
+    public string $currentStatus;
 
     public function mount($slug, $id)
     {
@@ -19,6 +20,8 @@ class TicketStatus extends Component
         $this->entry = QueueEntry::where('id', $id)
             ->where('business_id', $this->business->id)
             ->firstOrFail();
+            
+        $this->currentStatus = $this->entry->status;
 
         // Ensure browser remembers this ticket
         $this->dispatch('ticket-joined', slug: $slug, id: $id);
@@ -101,6 +104,7 @@ class TicketStatus extends Component
     public function render()
     {
         $this->entry->refresh();
+        $this->currentStatus = $this->entry->status;
 
         return view('livewire.public-queue.ticket-status')
             ->layout('layouts.public');

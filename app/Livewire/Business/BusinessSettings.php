@@ -14,6 +14,10 @@ class BusinessSettings extends Component
     public $queue_prefix;
     public $address;
     public $phone;
+    public $city;
+    public $state;
+    public $postcode;
+    public $business_hours;
 
     public function mount()
     {
@@ -25,6 +29,10 @@ class BusinessSettings extends Component
             $this->queue_prefix = $user->business->queue_prefix;
             $this->address = $user->business->address;
             $this->phone = $user->business->phone;
+            $this->city = $user->business->city;
+            $this->state = $user->business->state;
+            $this->postcode = $user->business->postcode;
+            $this->business_hours = $user->business->business_hours;
         } else {
             $this->join_code = strtoupper(Str::random(6));
             $this->queue_prefix = 'A';
@@ -41,6 +49,10 @@ class BusinessSettings extends Component
             'queue_prefix' => 'nullable|string|max:3',
             'address' => 'nullable|string',
             'phone' => 'nullable|string',
+            'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'postcode' => 'nullable|string|max:10',
+            'business_hours' => 'nullable|string',
         ]);
 
         if (!$user->business) {
@@ -51,6 +63,10 @@ class BusinessSettings extends Component
                 'queue_prefix' => strtoupper($this->queue_prefix ?? 'A'),
                 'address' => $this->address,
                 'phone' => $this->phone,
+                'city' => $this->city,
+                'state' => $this->state,
+                'postcode' => $this->postcode,
+                'business_hours' => $this->business_hours,
                 'queue_status' => 'closed',
             ]);
 
@@ -64,12 +80,15 @@ class BusinessSettings extends Component
             
         } else {
             $user->business->update([
-                'name' => $this->name,
                 'slug' => Str::slug($this->name),
                 'join_code' => strtoupper($this->join_code),
                 'queue_prefix' => strtoupper($this->queue_prefix ?? 'A'),
                 'address' => $this->address,
                 'phone' => $this->phone,
+                'city' => $this->city,
+                'state' => $this->state,
+                'postcode' => $this->postcode,
+                'business_hours' => $this->business_hours,
             ]);
             
             $this->dispatch('profile-updated', name: $user->name);

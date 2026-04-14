@@ -40,7 +40,11 @@ class JoinQueue extends Component
         $this->errorMessage = '';
 
         if ($this->business->queue_status !== 'open') {
-            $this->errorMessage = 'Sorry, the queue is currently closed.';
+            if ($this->business->queue_status === 'paused') {
+                $this->errorMessage = 'Sorry, the queue is currently paused: ' . ($this->business->pause_reason ?: 'On a short break.');
+            } else {
+                $this->errorMessage = 'Sorry, the queue is currently closed.';
+            }
             return;
         }
 

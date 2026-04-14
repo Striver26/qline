@@ -13,14 +13,21 @@
 
             <div class="flex flex-wrap gap-3">
                 <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm font-semibold text-white/85">
-                    <span class="h-2.5 w-2.5 rounded-full {{ $business->queue_status === 'open' ? 'bg-brand-300' : 'bg-rose-400' }}"></span>
-                    {{ $business->queue_status === 'open' ? 'Queue Open' : 'Queue Closed' }}
+                    <span class="h-2.5 w-2.5 rounded-full {{ $business->queue_status === 'open' ? 'bg-brand-300' : ($business->queue_status === 'paused' ? 'bg-amber-400' : 'bg-rose-400') }}"></span>
+                    {{ $business->queue_status === 'open' ? 'Queue Open' : ($business->queue_status === 'paused' ? 'Queue Paused' : 'Queue Closed') }}
                 </span>
                 <span class="inline-flex items-center rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm font-semibold text-white/75">
                     {{ $this->waitingCount }} waiting
                 </span>
             </div>
         </div>
+
+        @if($business->queue_status === 'paused')
+            <div class="mt-8 rounded-[2rem] border border-amber-300/30 bg-amber-500/15 p-8 text-center backdrop-blur-md shadow-[0_24px_60px_-32px_rgba(245,158,11,0.5)]">
+                <p class="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-amber-300">Queue Temporarily Paused</p>
+                <p class="mt-3 text-3xl font-bold tracking-[-0.04em] text-white">{{ $business->pause_reason ?? 'Short break' }}</p>
+            </div>
+        @endif
 
         <div class="mt-8 grid gap-8 xl:grid-cols-[0.92fr_1.08fr]">
             <section class="space-y-5">

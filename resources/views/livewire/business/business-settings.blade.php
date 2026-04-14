@@ -52,7 +52,20 @@
                 <p class="metric-label">Contact Details</p>
                 <div class="mt-5 space-y-5">
                     <flux:input wire:model="phone" :label="__('Support Phone Number')" placeholder="+60123456789" type="text" />
-                    <flux:textarea wire:model="address" :label="__('Business Address')" rows="3" placeholder="Your business location..." />
+                    <flux:textarea wire:model="address" :label="__('Business Address')" rows="2" placeholder="Your business location..." />
+                    <div class="grid gap-5 sm:grid-cols-3">
+                        <flux:input wire:model="city" :label="__('City')" placeholder="e.g. Kuala Lumpur" type="text" />
+                        <flux:input wire:model="state" :label="__('State')" placeholder="e.g. WP" type="text" />
+                        <flux:input wire:model="postcode" :label="__('Postcode')" placeholder="e.g. 50000" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="soft-card">
+                <p class="metric-label">Operating Hours</p>
+                <div class="mt-5 space-y-5">
+                    <flux:textarea wire:model="business_hours" :label="__('Business Hours')" rows="3" placeholder="Monday - Friday: 9am - 5pm&#10;Saturday: 10am - 2pm&#10;Sunday: Closed" />
+                    <flux:description>{{ __('Let your customers know when they can physically visit.') }}</flux:description>
                 </div>
             </div>
 

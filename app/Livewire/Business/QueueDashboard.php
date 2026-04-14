@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Business;
 
+
+
 use Livewire\Component;
 use App\Models\Tenant\Business;
 use App\Models\Queue\QueueEntry;
@@ -11,7 +13,8 @@ use App\Enums\QueueStatus;
 class QueueDashboard extends Component
 {
     public Business $business;
-    
+    public string $pauseReason = '';
+
     public function mount()
     {
         $this->business = auth()->user()->business;
@@ -67,11 +70,26 @@ class QueueDashboard extends Component
 
     public function toggleQueue(QueueService $queueService)
     {
-        if ($this->business->queue_status === 'open') {
+        if ($this->business->queue_status === 'open' || $this->business->queue_status === 'paused') {
             $queueService->closeQueue($this->business);
         } else {
             $queueService->openQueue($this->business);
         }
+        $this->business->refresh();
+    }
+
+    public function pauseQueue(QueueService $queueService)
+    {
+        $this->validate(['pauseReason' => 'required|string|max:255']);
+        $queueService->pauseQueue($this->business, $this->pauseReason);
+        $this->business->refresh();
+        $this->pauseReason = '';
+        $this->dispatch('close-modal', name: 'pause-queue-modal');
+    }
+
+    public function resumeQueue(QueueService $queueService)
+    {
+        $queueService->openQueue($this->business);
         $this->business->refresh();
     }
 

@@ -37,9 +37,18 @@
             </div>
 
             <div class="space-y-6">
+                @if($business->queue_status === 'paused')
+                    <div class="rounded-[1.4rem] border border-amber-200 bg-amber-50 p-5 text-center">
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-amber-700">Temporarily Paused</p>
+                        <p class="mt-2 text-sm font-semibold text-amber-900">
+                            {{ $business->pause_reason ?? 'The business is currently on a short break.' }}
+                        </p>
+                    </div>
+                @endif
                 <form wire:submit.prevent="joinQueue" class="space-y-6">
-                    <div>
-                        <label class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    <fieldset @disabled($business->queue_status !== 'open') class="space-y-6 disabled:opacity-60">
+                        <div>
+                            <label class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                             WhatsApp Number <span class="text-brand-700">(Recommended)</span>
                         </label>
                         <div class="mt-3">
@@ -87,6 +96,7 @@
                         <span wire:loading.remove>Take My Ticket</span>
                         <span wire:loading>Joining Queue...</span>
                     </button>
+                    </fieldset>
                 </form>
 
                 <div class="grid gap-3 sm:grid-cols-2">

@@ -9,19 +9,33 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-            <div class="badge-pill {{ $business->queue_status === 'open' ? 'badge-pill--brand' : '' }}">
-                <span class="h-2.5 w-2.5 rounded-full {{ $business->queue_status === 'open' ? 'bg-brand-500' : 'bg-rose-500' }}"></span>
-                {{ $business->queue_status === 'open' ? 'Queue Open' : 'Queue Closed' }}
+            <div class="badge-pill {{ $business->queue_status === 'open' ? 'badge-pill--brand' : ($business->queue_status === 'paused' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200' : '') }}">
+                <span class="h-2.5 w-2.5 rounded-full {{ $business->queue_status === 'open' ? 'bg-brand-500' : ($business->queue_status === 'paused' ? 'bg-amber-500' : 'bg-rose-500') }}"></span>
+                {{ $business->queue_status === 'open' ? 'Queue Open' : ($business->queue_status === 'paused' ? 'Queue Paused' : 'Queue Closed') }}
             </div>
+
+            @if($business->queue_status === 'open')
+                <flux:modal.trigger name="pause-queue-modal">
+                    <flux:button variant="subtle" class="rounded-full px-5 py-2.5 font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">
+                        <flux:icon.pause class="mr-2 h-4 w-4" />
+                        Pause
+                    </flux:button>
+                </flux:modal.trigger>
+            @elseif($business->queue_status === 'paused')
+                <flux:button wire:click="resumeQueue" variant="subtle" class="rounded-full px-5 py-2.5 font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10">
+                    <flux:icon.play class="mr-2 h-4 w-4" />
+                    Resume
+                </flux:button>
+            @endif
 
             <flux:button
                 wire:click="toggleQueue"
                 class="rounded-full px-5 py-2.5 font-semibold shadow-[0_24px_60px_-32px_rgba(15,23,42,0.4)]"
-                style="{{ $business->queue_status === 'open' ? '' : 'background: linear-gradient(135deg, #149f7c, #0f7f66); border-color: #149f7c; color: white;' }}"
-                :variant="$business->queue_status === 'open' ? 'danger' : 'primary'"
+                style="{{ $business->queue_status !== 'closed' ? '' : 'background: linear-gradient(135deg, #149f7c, #0f7f66); border-color: #149f7c; color: white;' }}"
+                :variant="$business->queue_status !== 'closed' ? 'danger' : 'primary'"
             >
-                <flux:icon class="mr-2 h-4 w-4" :name="$business->queue_status === 'open' ? 'x-mark' : 'bolt'" />
-                {{ $business->queue_status === 'open' ? 'Close Queue' : 'Open Queue' }}
+                <flux:icon class="mr-2 h-4 w-4" :name="$business->queue_status !== 'closed' ? 'x-mark' : 'bolt'" />
+                {{ $business->queue_status !== 'closed' ? 'Close Queue' : 'Open Queue' }}
             </flux:button>
         </div>
     </div>
@@ -161,4 +175,22 @@
             </div>
         </div>
     </div>
+
+    <flux:modal name="pause-queue-modal" class="md:max-w-md">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Pause Queue</flux:heading>
+                <flux:subheading>Let your customers know why the queue is temporarily on hold.</flux:subheading>
+            </div>
+
+            <flux:input wire:model="pauseReason" label="Pause Reason" placeholder="e.g., On break for 15 minutes, Friday prayers..." required />
+
+            <div class="flex items-center gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">Cancel</flux:button>
+                </flux:modal.close>
+                <flux:button wire:click="pauseQueue" variant="primary">Confirm Pause</flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>
