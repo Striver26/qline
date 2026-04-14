@@ -40,15 +40,15 @@ Route::middleware(['auth', 'verified'])->prefix('business')->name('business.')->
 });
 
 // Admin Platform Panel
-// Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
-//     Route::get('dashboard', \App\Livewire\Admin\Dashboard::class)->name('dashboard');
-//     Route::get('users', \App\Livewire\Admin\Users\UsersIndex::class)->name('users');
-//     Route::get('businesses', \App\Livewire\Admin\Businesses\BusinessesIndex::class)->name('businesses');
-//     Route::get('subscriptions', \App\Livewire\Admin\Subscriptions\SubscriptionsIndex::class)->name('subscriptions');
-//     Route::get('payments', \App\Livewire\Admin\Payments\PaymentsIndex::class)->name('payments');
-//     Route::get('wa-messages', \App\Livewire\Admin\WaMessages\WaMessagesIndex::class)->name('wa-messages');
-//     Route::get('queue-entries', \App\Livewire\Admin\QueueEntries\QueueEntriesIndex::class)->name('queue-entries');
-//     Route::get('feedback', \App\Livewire\Admin\Feedback\FeedbackIndex::class)->name('feedback');
-// });
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('dashboard', \App\Livewire\Admin\Dashboard::class)->name('dashboard');
+    Route::get('users', \App\Livewire\Admin\Users\UsersIndex::class)->name('users');
+    Route::get('businesses', \App\Livewire\Admin\Businesses\BusinessesIndex::class)->name('businesses');
+    Route::get('subscriptions', \App\Livewire\Admin\Subscriptions\SubscriptionsIndex::class)->name('subscriptions');
+    Route::get('payments', \App\Livewire\Admin\Payments\PaymentsIndex::class)->name('payments');
+    Route::get('wa-messages', \App\Livewire\Admin\WaMessages\WaMessagesIndex::class)->name('wa-messages');
+    Route::get('queue-entries', \App\Livewire\Admin\QueueEntries\QueueEntriesIndex::class)->name('queue-entries');
+    Route::get('feedback', \App\Livewire\Admin\Feedback\FeedbackIndex::class)->name('feedback');
+});
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';

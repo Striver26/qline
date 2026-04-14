@@ -15,7 +15,6 @@
     <span class="min-w-0">
         <span class="brand-wordmark {{ $sidebar ? 'text-lg' : '' }} {{ $inverse ? '!text-white' : '' }}">Qline</span>
         <span class="brand-meta {{ $inverse ? '!text-white/70' : '' }}">
-            {{ $sidebar ? __('Queue command center') : __('Queue orchestration, simplified') }}
         </span>
     </span>
 </{{ $tag }}>

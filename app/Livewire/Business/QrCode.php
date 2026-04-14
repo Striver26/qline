@@ -3,8 +3,6 @@
 namespace App\Livewire\Business;
 
 use Livewire\Component;
-use chillerlan\QRCode\QRCode as QrLib;
-use chillerlan\QRCode\QROptions;
 
 class QrCode extends Component
 {
@@ -12,7 +10,7 @@ class QrCode extends Component
     {
         $business = auth()->user()->business;
         $url = route('public.join', ['slug' => $business->slug]);
-        
+
         // Define options explicitly
         $options = new \chillerlan\QRCode\QROptions([
             'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class,
@@ -22,7 +20,7 @@ class QrCode extends Component
         ]);
 
         $qrCode = (new \chillerlan\QRCode\QRCode($options))->render($url);
-        
+
         return view('livewire.business.qr-code', [
             'business' => $business,
             'qrCode' => $qrCode,

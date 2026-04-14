@@ -80,7 +80,7 @@ class QueueService
                 ->where('status', QueueStatus::WAITING->value)
                 ->count() + 1;
 
-            return QueueEntry::create([
+            $entry = QueueEntry::create([
                 'business_id' => $business->id,
                 'wa_id' => $waId,
                 'ticket_number' => $number,
@@ -90,6 +90,10 @@ class QueueService
                 'cancel_token' => Str::random(32),
                 'position' => $position
             ]);
+
+            event(new \App\Events\TicketJoined($entry, $business));
+
+            return $entry;
         });
     }
 
@@ -140,6 +144,8 @@ class QueueService
             ]);
 
             $this->recalculatePositions($business->id);
+
+            event(new \App\Events\TicketStatusUpdated($nextEntry, $business));
 
             return $nextEntry;
         });
@@ -200,6 +206,7 @@ class QueueService
             'position' => 0
         ]);
         $this->recalculatePositions($entry->business_id);
+        event(new \App\Events\TicketStatusUpdated($entry, $entry->business));
     }
 
     public function cancel(QueueEntry $entry)
@@ -209,6 +216,7 @@ class QueueService
             'position' => 0
         ]);
         $this->recalculatePositions($entry->business_id);
+        event(new \App\Events\TicketStatusUpdated($entry, $entry->business));
     }
 
     public function recalculatePositions($businessId)

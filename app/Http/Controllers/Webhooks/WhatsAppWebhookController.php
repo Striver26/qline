@@ -57,13 +57,7 @@ class WhatsAppWebhookController extends Controller
 
             try {
                 $entry = $queueService->join($business, $waId);
-                
-                // Reply with their status
-                $trackerUrl = url("/q/{$business->slug}/status/{$entry->id}");
-                $responseMsg = "Hi! Welcome to {$business->name}.\n\nYour ticket is *{$entry->ticket_code}*.\nTrack your turn live here: {$trackerUrl}";
-                
-                $waService->sendText($waId, $responseMsg, $business->id, $entry->id);
-
+                // Welcome text is now handled by TicketJoined event listener
             } catch (\Exception $e) {
                 $waService->sendText($waId, "Queue entry failed: " . $e->getMessage(), $business->id);
             }

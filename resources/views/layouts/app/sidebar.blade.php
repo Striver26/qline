@@ -11,47 +11,80 @@
             <flux:sidebar.header class="px-4 pt-4">
                 <div class="glass-card !rounded-[1.6rem] !p-4">
                     <div class="flex items-center justify-between gap-3">
-                        <x-app-logo :sidebar="true" href="{{ route('business.dashboard') }}" wire:navigate />
+                        <x-app-logo :sidebar="true" href="{{ route(in_array(auth()->user()->role, [\App\Enums\UserRole::SUPERADMIN, \App\Enums\UserRole::PLATFORM_STAFF]) ? 'admin.dashboard' : 'business.dashboard') }}" wire:navigate />
                         <flux:sidebar.collapse class="lg:hidden" />
                     </div>
                 </div>
             </flux:sidebar.header>
 
-            <flux:sidebar.nav class="px-3 pt-4">
-                <flux:sidebar.group :heading="__('Operations')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('business.dashboard')" :current="request()->routeIs('business.dashboard')" wire:navigate>
-                        {{ __('Command Center') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="clock" :href="route('business.entries')" :current="request()->routeIs('business.entries')" wire:navigate>
-                        {{ __('Queue History') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="qr-code" :href="route('business.qr')" :current="request()->routeIs('business.qr')" wire:navigate>
-                        {{ __('QR Standee') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="chat-bubble-bottom-center-text" :href="route('business.feedback')" :current="request()->routeIs('business.feedback')" wire:navigate>
-                        {{ __('Feedback') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
-            </flux:sidebar.nav>
-
-            <flux:sidebar.nav class="px-3 pt-2">
-                <flux:sidebar.group :heading="__('Growth')" class="grid">
-                    <flux:sidebar.item icon="gift" :href="route('business.rewards')" :current="request()->routeIs('business.rewards')" wire:navigate>
-                        {{ __('Rewards') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="users" :href="route('business.staff')" :current="request()->routeIs('business.staff')" wire:navigate>
-                        {{ __('Staff') }}
-                    </flux:sidebar.item>
-                    @if(auth()->user()->isOwner())
-                        <flux:sidebar.item icon="credit-card" :href="route('business.billing')" :current="request()->routeIs('business.billing')" wire:navigate>
-                            {{ __('Billing') }}
+            @if(in_array(auth()->user()->role, [\App\Enums\UserRole::SUPERADMIN, \App\Enums\UserRole::PLATFORM_STAFF]))
+                <flux:sidebar.nav class="px-3 pt-4">
+                    <flux:sidebar.group :heading="__('Platform')" class="grid">
+                        <flux:sidebar.item icon="command-line" :href="route('admin.dashboard')" :current="request()->routeIs('admin.dashboard')" wire:navigate>
+                            {{ __('Dashboard') }}
                         </flux:sidebar.item>
-                    @endif
-                    <flux:sidebar.item icon="cog-8-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate>
-                        {{ __('Settings') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
-            </flux:sidebar.nav>
+                        <flux:sidebar.item icon="building-storefront" :href="route('admin.businesses')" :current="request()->routeIs('admin.businesses')" wire:navigate>
+                            {{ __('Tenants') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="users" :href="route('admin.users')" :current="request()->routeIs('admin.users')" wire:navigate>
+                            {{ __('Users') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="chat-bubble-left-ellipsis" :href="route('admin.wa-messages')" :current="request()->routeIs('admin.wa-messages')" wire:navigate>
+                            {{ __('WhatsApp Log') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                </flux:sidebar.nav>
+
+                <flux:sidebar.nav class="px-3 pt-2">
+                    <flux:sidebar.group :heading="__('Revenue & Settings')" class="grid">
+                        <flux:sidebar.item icon="banknotes" :href="route('admin.payments')" :current="request()->routeIs('admin.payments')" wire:navigate>
+                            {{ __('Payments') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrow-path-rounded-square" :href="route('admin.subscriptions')" :current="request()->routeIs('admin.subscriptions')" wire:navigate>
+                            {{ __('Subscriptions') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="clock" :href="route('admin.queue-entries')" :current="request()->routeIs('admin.queue-entries')" wire:navigate>
+                            {{ __('Queue Dump') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                </flux:sidebar.nav>
+            @else
+                <flux:sidebar.nav class="px-3 pt-4">
+                    <flux:sidebar.group :heading="__('Operations')" class="grid">
+                        <flux:sidebar.item icon="home" :href="route('business.dashboard')" :current="request()->routeIs('business.dashboard')" wire:navigate>
+                            {{ __('Command Center') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="clock" :href="route('business.entries')" :current="request()->routeIs('business.entries')" wire:navigate>
+                            {{ __('Queue History') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="qr-code" :href="route('business.qr')" :current="request()->routeIs('business.qr')" wire:navigate>
+                            {{ __('QR Standee') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="chat-bubble-bottom-center-text" :href="route('business.feedback')" :current="request()->routeIs('business.feedback')" wire:navigate>
+                            {{ __('Feedback') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                </flux:sidebar.nav>
+
+                <flux:sidebar.nav class="px-3 pt-2">
+                    <flux:sidebar.group :heading="__('Growth')" class="grid">
+                        <flux:sidebar.item icon="gift" :href="route('business.rewards')" :current="request()->routeIs('business.rewards')" wire:navigate>
+                            {{ __('Rewards') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="users" :href="route('business.staff')" :current="request()->routeIs('business.staff')" wire:navigate>
+                            {{ __('Staff') }}
+                        </flux:sidebar.item>
+                        @if(auth()->user()->isOwner())
+                            <flux:sidebar.item icon="credit-card" :href="route('business.billing')" :current="request()->routeIs('business.billing')" wire:navigate>
+                                {{ __('Billing') }}
+                            </flux:sidebar.item>
+                        @endif
+                        <flux:sidebar.item icon="cog-8-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate>
+                            {{ __('Settings') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                </flux:sidebar.nav>
+            @endif
 
             <flux:spacer />
 
@@ -70,7 +103,7 @@
         <flux:header class="border-b border-white/60 bg-white/72 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/78 lg:hidden">
             <flux:sidebar.toggle class="lg:hidden mr-3" icon="bars-2" inset="left" />
 
-            <x-app-logo href="{{ route('business.dashboard') }}" wire:navigate />
+            <x-app-logo href="{{ route(in_array(auth()->user()->role, [\App\Enums\UserRole::SUPERADMIN, \App\Enums\UserRole::PLATFORM_STAFF]) ? 'admin.dashboard' : 'business.dashboard') }}" wire:navigate />
 
             <flux:spacer />
 

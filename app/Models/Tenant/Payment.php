@@ -8,6 +8,13 @@ class Payment extends Model
 {
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'paid_at' => 'datetime',
+        ];
+    }
+
     // The business that made this payment
     public function business()
     {

@@ -5,6 +5,7 @@ namespace App\Livewire\Business;
 use Livewire\Component;
 use App\Models\Tenant\Business;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class BusinessSettings extends Component
 {
@@ -36,7 +37,7 @@ class BusinessSettings extends Component
 
         $this->validate([
             'name' => 'required|string|max:255',
-            'join_code' => 'required|string|max:10|unique:businesses,join_code,' . ($user->business_id ?? 'NULL'),
+            'join_code' => ['required', 'string', 'max:10', Rule::unique('businesses', 'join_code')->ignore($user->business_id)],
             'queue_prefix' => 'nullable|string|max:3',
             'address' => 'nullable|string',
             'phone' => 'nullable|string',

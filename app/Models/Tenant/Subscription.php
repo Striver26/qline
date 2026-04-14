@@ -8,6 +8,14 @@ class Subscription extends Model
 {
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'starts_at' => 'datetime',
+            'expires_at' => 'datetime',
+        ];
+    }
+
     // The business this subscription belongs to
     public function business()
     {
