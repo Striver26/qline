@@ -2,15 +2,23 @@
 
 namespace App\Models\Tenant;
 
+use App\Enums\SubTier;
 use Illuminate\Database\Eloquent\Model;
 
 class Subscription extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'type',
+        'status',
+        'starts_at',
+        'expires_at',
+    ];
 
     protected function casts(): array
     {
         return [
+            'type' => SubTier::class,
             'starts_at' => 'datetime',
             'expires_at' => 'datetime',
         ];

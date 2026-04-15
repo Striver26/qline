@@ -48,3 +48,10 @@ function something()
 {
     // ..
 }
+
+function skipUnlessFortifyHas(string $feature, ?string $message = null): void
+{
+    if (! \Laravel\Fortify\Features::enabled($feature)) {
+        test()->markTestSkipped($message ?? "Fortify feature [{$feature}] is not enabled.");
+    }
+}

@@ -6,7 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class EarnedReward extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'wa_id',
+        'loyalty_reward_id',
+        'status',
+        'redeemed_at',
+    ];
 
     protected function casts(): array
     {

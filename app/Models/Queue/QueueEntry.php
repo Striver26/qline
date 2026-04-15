@@ -6,7 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class QueueEntry extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'wa_id',
+        'ticket_number',
+        'ticket_code',
+        'status',
+        'source',
+        'cancel_token',
+        'position',
+        'counter_id',
+        'called_at',
+        'served_at',
+        'completed_at',
+    ];
 
     // The business this ticket belongs to
     public function business()

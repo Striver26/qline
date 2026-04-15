@@ -6,7 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class CustomerFeedback extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'queue_entry_id',
+        'rating',
+        'comment',
+        'wa_id',
+    ];
 
     // The business receiving the feedback
     public function business()

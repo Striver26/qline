@@ -5,6 +5,15 @@ use App\Http\Controllers\InviteController;
 
 Route::view('/', 'welcome')->name('home');
 
+Route::get('dashboard', function () {
+    if (auth()->user()->role === \App\Enums\UserRole::SUPERADMIN || 
+        auth()->user()->role === \App\Enums\UserRole::PLATFORM_STAFF) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('business.dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
 // Webhooks
 Route::get('/webhook/whatsapp', [\App\Http\Controllers\Webhooks\WhatsAppWebhookController::class, 'verify']);
 Route::post('/webhook/whatsapp', [\App\Http\Controllers\Webhooks\WhatsAppWebhookController::class, 'process']);

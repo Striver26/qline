@@ -34,7 +34,7 @@
                 @forelse($subscriptions as $sub)
                     <flux:table.row>
                         <flux:table.cell class="font-semibold text-slate-800 dark:text-slate-100">{{$sub->business->name ?? 'Unknown'}}</flux:table.cell>
-                        <flux:table.cell class="capitalize">{{$sub->type}}</flux:table.cell>
+                        <flux:table.cell class="capitalize">{{$sub->type->value}}</flux:table.cell>
                         <flux:table.cell>
                             <span class="badge-pill badge-pill--brand">{{$sub->status}}</span>
                         </flux:table.cell>
@@ -66,6 +66,7 @@
                 <flux:select label="Billing Cycle" wire:model="editType" required>
                     <option value="daily">Daily Routing</option>
                     <option value="monthly">Monthly Cycle</option>
+                    <option value="advanced">Advanced Tier</option>
                 </flux:select>
                 
                 <flux:select label="System Status" wire:model="editStatus" required>

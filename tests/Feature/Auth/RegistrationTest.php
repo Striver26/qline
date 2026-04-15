@@ -3,7 +3,7 @@
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
-    $this->skipUnlessFortifyHas(Features::registration());
+    skipUnlessFortifyHas(Features::registration());
 });
 
 test('registration screen can be rendered', function () {
@@ -21,7 +21,7 @@ test('new users can register', function () {
     ]);
 
     $response->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route('business.dashboard', absolute: false));
 
     $this->assertAuthenticated();
 });

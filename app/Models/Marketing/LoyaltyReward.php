@@ -6,7 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class LoyaltyReward extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'name',
+        'description',
+        'required_visits',
+        'is_active',
+    ];
 
     protected function casts(): array
     {

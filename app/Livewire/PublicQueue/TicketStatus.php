@@ -86,18 +86,37 @@ class TicketStatus extends Component
             ->where('status', 'available')
             ->first();
 
-        $nextReward = \App\Models\Marketing\LoyaltyReward::where('business_id', $this->business->id)
-            ->where('is_active', true)
-            ->where('required_visits', '>', $visits)
-            ->orderBy('required_visits', 'asc')
-            ->first();
+        // Cyclic Loyalty Logic: Calculate next milestone for all active rewards
+        $rewards = \App\Models\Marketing\LoyaltyReward::where('business_id', $this->business->id)
+            ->get();
+
+        $nextRewardIn = null;
+        $nextRewardName = null;
+
+        foreach ($rewards as $reward) {
+            if ($reward->required_visits <= 0) continue;
+
+            // How many visits remaining in the current cycle for this reward
+            $progress = $visits % $reward->required_visits;
+            $remaining = $reward->required_visits - $progress;
+
+            // If remaining matches required_visits and we have no reward pending, 
+            // it means they are at the start of a cycle. 
+            // If they HAVE a reward pending, we don't need to show 'Next' yet as 
+            // the 'has_reward' check takes precedence in the Blade.
+
+            if ($nextRewardIn === null || $remaining < $nextRewardIn) {
+                $nextRewardIn = $remaining;
+                $nextRewardName = $reward->reward_value;
+            }
+        }
 
         return [
             'visits' => $visits,
             'has_reward' => !!$availableReward,
             'reward_name' => $availableReward?->reward?->reward_value ?? 'Gift',
-            'next_reward_in' => $nextReward ? ($nextReward->required_visits - $visits) : null,
-            'next_reward_name' => $nextReward?->reward_value
+            'next_reward_in' => $nextRewardIn,
+            'next_reward_name' => $nextRewardName
         ];
     }
 

@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Platform\Invitation;
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules;
 
 class InviteController extends Controller
@@ -41,17 +43,13 @@ class InviteController extends Controller
             'role' => $invitation->role,
             'business_id' => $invitation->business_id,
             'profile_completed' => true,
+            'email_verified_at' => now(),
         ]);
 
         $invitation->update(['accepted_at' => now()]);
 
-        auth()->login($user);
+        Auth::login($user);
 
-        // Redirect based on role
-        if ($user->role->value === 'platform_staff') {
-            return redirect()->route('admin.dashboard');
-        }
-
-        return redirect()->route('business.dashboard');
+        return redirect()->route('dashboard');
     }
 }

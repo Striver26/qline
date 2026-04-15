@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class LoyaltyVisit extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'queue_entry_id',
+        'wa_id',
+        'visit_number',
+    ];
 
     protected function casts(): array
     {

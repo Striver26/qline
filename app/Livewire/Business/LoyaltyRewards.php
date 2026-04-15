@@ -80,15 +80,6 @@ class LoyaltyRewards extends Component
         $this->dispatch('reward-saved');
     }
 
-    public function toggleActive($id)
-    {
-        if (! $this->isOwner()) return;
-
-        $reward = LoyaltyReward::where('business_id', auth()->user()->business_id)
-            ->findOrFail($id);
-
-        $reward->update(['is_active' => !$reward->is_active]);
-    }
 
     public function removeReward($id)
     {

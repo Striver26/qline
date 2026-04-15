@@ -6,7 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'subscription_id',
+        'amount',
+        'status',
+        'reference',
+        'paid_at',
+    ];
 
     protected function casts(): array
     {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Tenant\Business;
+use App\Models\Tenant\Subscription;
 use App\Models\Queue\QueueEntry;
 use App\Services\Queue\QueueService;
 use App\Enums\QueueStatus;
@@ -170,18 +171,28 @@ it('cancels a waiting ticket', function () {
 
 // --- Close Queue ---
 
-it('cancels all waiting tickets when queue is closed', function () {
-    $e1 = $this->service->join($this->business, '60111111111');
-    $e2 = $this->service->join($this->business, '60222222222');
+it('cancels all active tickets and resets counters when queue is closed', function () {
+    $e1 = $this->service->join($this->business, '60111111111'); // waiting
+    $e2 = $this->service->addManual($this->business);           // waiting
 
-    $this->service->closeQueue($this->business);
+    $this->service->callNext($this->business);                  // e1 becomes called
+
+    $this->business->update([
+        'current_number' => 10,
+        'entries_today' => 10
+    ]);
+
+    $this->service->closeQueue($this->business->refresh());
 
     $e1->refresh();
     $e2->refresh();
+    $this->business->refresh();
 
     expect($e1->status)->toBe(QueueStatus::CANCELLED->value);
     expect($e2->status)->toBe(QueueStatus::CANCELLED->value);
     expect($this->business->queue_status)->toBe('closed');
+    expect($this->business->current_number)->toBe(0);
+    expect($this->business->entries_today)->toBe(0);
 });
 
 // --- Open Queue ---
@@ -194,13 +205,28 @@ it('opens queue and resets daily counters', function () {
         'last_reset_at' => now()->subDay(),
     ]);
 
-    $this->service->openQueue($this->business);
+    // Requires active subscription
+    Subscription::create([
+        'business_id' => $this->business->id,
+        'type' => 'daily',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addDay(),
+    ]);
+
+    $this->service->openQueue($this->business->refresh());
     $this->business->refresh();
 
     expect($this->business->queue_status)->toBe('open');
     expect($this->business->current_number)->toBe(0);
     expect($this->business->entries_today)->toBe(0);
 });
+
+it('rejects opening queue without active subscription', function () {
+    $this->business->update(['queue_status' => 'closed']);
+
+    $this->service->openQueue($this->business);
+})->throws(Exception::class, 'active subscription');
 
 // --- Pause Queue ---
 

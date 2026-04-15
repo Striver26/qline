@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Counter extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'name',
+        'is_active',
+    ];
 
     public function business()
     {

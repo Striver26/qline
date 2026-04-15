@@ -6,7 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Business extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'name',
+        'slug',
+        'join_code',
+        'phone',
+        'address',
+        'city',
+        'state',
+        'postcode',
+        'pause_reason',
+        'is_active',
+        'queue_status',
+        'queue_prefix',
+        'current_number',
+        'daily_limit',
+        'entries_today',
+        'notify_turns_before',
+        'last_reset_at',
+    ];
 
     // Cast properties
     protected function casts(): array

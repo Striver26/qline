@@ -74,7 +74,21 @@ class UsersIndex extends Component
 
     public function deleteUser()
     {
-        User::findOrFail($this->deletingUserId)->delete();
+        if ($this->deletingUserId === auth()->id()) {
+            session()->flash('error', 'You cannot delete your own account.');
+            $this->dispatch('modal-close', name: 'delete-user');
+            return;
+        }
+
+        $user = User::findOrFail($this->deletingUserId);
+
+        if ($user->role === \App\Enums\UserRole::SUPERADMIN && User::where('role', 'superadmin')->count() <= 1) {
+            session()->flash('error', 'Cannot delete the last superadmin account.');
+            $this->dispatch('modal-close', name: 'delete-user');
+            return;
+        }
+
+        $user->delete();
         $this->dispatch('modal-close', name: 'delete-user');
         session()->flash('status', "User permanently removed.");
     }

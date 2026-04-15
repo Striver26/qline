@@ -23,7 +23,7 @@ class SubscriptionsIndex extends Component
     {
         $sub = Subscription::findOrFail($id);
         $this->editingSubId = $sub->id;
-        $this->editType = $sub->type;
+        $this->editType = $sub->type->value;
         $this->editStatus = $sub->status;
         $this->editExpiresAt = $sub->expires_at ? $sub->expires_at->format('Y-m-d') : '';
         $this->dispatch('modal-show', name: 'edit-subscription');

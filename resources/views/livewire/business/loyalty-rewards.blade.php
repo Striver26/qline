@@ -66,7 +66,7 @@
 
     <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         @forelse($rewards as $reward)
-            <div class="glass-card {{ !$reward->is_active ? 'opacity-65' : '' }}">
+            <div class="glass-card">
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex h-12 w-12 items-center justify-center rounded-[1rem]
                         {{ $reward->reward_type === 'freebie' ? 'bg-brand-50 text-brand-700' : ($reward->reward_type === 'discount_percent' ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700') }}">
@@ -79,9 +79,6 @@
                         @endif
                     </div>
 
-                    <span class="badge-pill {{ $reward->is_active ? 'badge-pill--brand' : '' }}">
-                        {{ $reward->is_active ? 'Active' : 'Paused' }}
-                    </span>
                 </div>
 
                 <h2 class="mt-6 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">
@@ -102,9 +99,6 @@
                     <div class="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-200/70 pt-4 dark:border-white/10">
                         <flux:button wire:click="edit({{ $reward->id }})" size="sm" variant="ghost" class="rounded-full px-3 font-semibold">
                             Edit
-                        </flux:button>
-                        <flux:button wire:click="toggleActive({{ $reward->id }})" size="sm" variant="ghost" class="rounded-full px-3 font-semibold">
-                            {{ $reward->is_active ? 'Pause' : 'Resume' }}
                         </flux:button>
                         <flux:button
                             wire:click="removeReward({{ $reward->id }})"

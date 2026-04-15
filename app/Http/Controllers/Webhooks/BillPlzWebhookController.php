@@ -95,7 +95,7 @@ class BillPlzWebhookController extends Controller
             // Activate the subscription
             $subscription = $payment->subscription;
             if ($subscription) {
-                $tier = $subscription->type;
+                $tier = $subscription->type->value;
                 $tierConfig = config("qline.tiers.{$tier}", []);
                 $billingCycle = $tierConfig['billing_cycle'] ?? 'daily';
 

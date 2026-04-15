@@ -6,7 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Invitation extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'business_id',
+        'email',
+        'role',
+        'token',
+        'expires_at',
+        'accepted_at',
+    ];
 
     protected function casts(): array
     {
