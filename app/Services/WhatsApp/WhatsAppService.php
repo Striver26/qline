@@ -15,8 +15,8 @@ class WhatsAppService
     public function __construct()
     {
         // Using config fallback values for local development
-        $this->token = config('qline.meta.token', 'dummy_token');
-        $this->phoneNumberId = config('qline.meta.phone_number_id', 'dummy_id');
+        $this->token = config('qline.meta.token') ?? 'dummy_token';
+        $this->phoneNumberId = config('qline.meta.phone_number_id') ?? 'dummy_id';
         $this->url = "https://graph.facebook.com/v19.0/{$this->phoneNumberId}/messages";
     }
 

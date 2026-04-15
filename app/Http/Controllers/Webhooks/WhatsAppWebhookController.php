@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppWebhookController extends Controller
 {
     /**
-     * Handle webhook verification from Meta
+     * Handle webhook verification from Meta.
+     * Uses config() instead of env() to work with config caching.
      */
     public function verify(Request $request)
     {
@@ -21,7 +22,7 @@ class WhatsAppWebhookController extends Controller
         $challenge = $request->query('hub_challenge');
 
         if ($mode && $token) {
-            if ($mode === 'subscribe' && $token === env('META_WEBHOOK_VERIFY_TOKEN', 'qline_secret')) {
+            if ($mode === 'subscribe' && $token === config('qline.meta.webhook_verify_token', 'qline_secret')) {
                 return response($challenge, 200);
             }
         }
@@ -29,10 +30,17 @@ class WhatsAppWebhookController extends Controller
     }
 
     /**
-     * Process incoming WhatsApp messages
+     * Process incoming WhatsApp messages.
+     * Verifies the X-Hub-Signature-256 header to prevent forged payloads.
      */
     public function process(Request $request, QueueService $queueService, WhatsAppService $waService)
     {
+        // Verify webhook signature from Meta
+        if (!$this->verifyWebhookSignature($request)) {
+            Log::warning('WhatsApp webhook signature verification failed');
+            return response('Invalid signature', 403);
+        }
+
         $payload = $request->all();
         Log::info('Incoming Meta Webhook', ['payload' => $payload]);
 
@@ -67,5 +75,29 @@ class WhatsAppWebhookController extends Controller
         }
 
         return response('OK', 200);
+    }
+
+    /**
+     * Verify the X-Hub-Signature-256 header from Meta's webhook payload.
+     * Returns true if signature is valid, or if no app secret is configured (local dev).
+     */
+    protected function verifyWebhookSignature(Request $request): bool
+    {
+        $appSecret = config('qline.meta.app_secret');
+
+        // Skip verification in local dev when no secret is configured
+        if (!$appSecret) {
+            return true;
+        }
+
+        $signature = $request->header('X-Hub-Signature-256');
+
+        if (!$signature) {
+            return false;
+        }
+
+        $expectedSignature = 'sha256=' . hash_hmac('sha256', $request->getContent(), $appSecret);
+
+        return hash_equals($expectedSignature, $signature);
     }
 }

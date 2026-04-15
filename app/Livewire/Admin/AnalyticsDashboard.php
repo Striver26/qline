@@ -26,11 +26,11 @@ class AnalyticsDashboard extends Component
 
         // Revenue (MRR) - Assuming monthly subscriptions.
         // Summing the active subscription plan prices. For simplicity, we just sum up total completed payments in last 30 days
-        $thirtyDayRevenue = Payment::where('status', 'succeeded')
+        $thirtyDayRevenue = Payment::where('status', 'paid')
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->sum('amount');
         
-        $totalRevenue = Payment::where('status', 'succeeded')->sum('amount');
+        $totalRevenue = Payment::where('status', 'paid')->sum('amount');
 
         return [
             'active_businesses' => $activeBusinesses,

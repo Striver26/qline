@@ -9,6 +9,10 @@ Route::view('/', 'welcome')->name('home');
 Route::get('/webhook/whatsapp', [\App\Http\Controllers\Webhooks\WhatsAppWebhookController::class, 'verify']);
 Route::post('/webhook/whatsapp', [\App\Http\Controllers\Webhooks\WhatsAppWebhookController::class, 'process']);
 
+// BillPlz Payment Webhooks (no auth — server-to-server)
+Route::post('/webhook/billplz/callback', [\App\Http\Controllers\Webhooks\BillPlzWebhookController::class, 'callback'])->name('webhook.billplz.callback');
+Route::get('/webhook/billplz/redirect', [\App\Http\Controllers\Webhooks\BillPlzWebhookController::class, 'redirect'])->name('webhook.billplz.redirect');
+
 // Auth routes for standard Fortify happen automatically
 
 // Invite Logic
@@ -41,7 +45,7 @@ Route::middleware(['auth', 'verified'])->prefix('business')->name('business.')->
 });
 
 // Admin Platform Panel
-Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', \App\Http\Middleware\RequireAdminRole::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', \App\Livewire\Admin\Dashboard::class)->name('dashboard');
     Route::get('analytics', \App\Livewire\Admin\AnalyticsDashboard::class)->name('analytics');
     Route::get('users', \App\Livewire\Admin\Users\UsersIndex::class)->name('users');

@@ -6,4 +6,5 @@ enum SubTier: string
 {
     case DAILY = 'daily';
     case MONTHLY = 'monthly';
+    case ADVANCED = 'advanced';
 }

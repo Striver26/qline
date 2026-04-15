@@ -12,14 +12,15 @@ class SubscriptionBilling extends Component
     public function subscribe(BillPlzService $billPlz, $tier = 'daily')
     {
         $business = auth()->user()->business;
-        
-        $amount = $tier === 'daily' ? 15.00 : 400.00;
+
+        $tierConfig = config("qline.tiers.{$tier}");
+        $amount = $tierConfig['price'] ?? ($tier === 'daily' ? 10.00 : 300.00);
         $description = "QLine " . ucfirst($tier) . " Subscription for {$business->name}";
-        
+
         $sub = Subscription::updateOrCreate(
             ['business_id' => $business->id],
             [
-                'tier' => $tier,
+                'type' => $tier,
                 'status' => 'pending',
                 'expires_at' => null
             ]
@@ -29,15 +30,15 @@ class SubscriptionBilling extends Component
             'business_id' => $business->id,
             'subscription_id' => $sub->id,
             'amount' => $amount,
-            'payment_status' => 'pending'
+            'status' => 'pending'
         ]);
 
-        $callbackUrl = route('invite.show', 'dummy'); 
-        $redirectUrl = route('business.billing');
+        $callbackUrl = route('webhook.billplz.callback');
+        $redirectUrl = route('webhook.billplz.redirect');
 
         try {
             $bill = $billPlz->createBill($business, $amount, $description, $callbackUrl, $redirectUrl);
-            $payment->update(['bill_id' => $bill['id'] ?? 'mock']);
+            $payment->update(['reference' => $bill['id'] ?? 'mock']);
             return redirect()->away($bill['url']);
         } catch (\Exception $e) {
             session()->flash('error', 'Payment gateway error: ' . $e->getMessage());
@@ -54,4 +55,3 @@ class SubscriptionBilling extends Component
             ->layout('layouts.app');
     }
 }
-
