@@ -70,10 +70,14 @@ class QueueDashboard extends Component
 
     public function toggleQueue(QueueService $queueService)
     {
-        if ($this->business->queue_status === 'open' || $this->business->queue_status === 'paused') {
-            $queueService->closeQueue($this->business);
-        } else {
-            $queueService->openQueue($this->business);
+        try {
+            if ($this->business->queue_status === 'open' || $this->business->queue_status === 'paused') {
+                $queueService->closeQueue($this->business);
+            } else {
+                $queueService->openQueue($this->business);
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
         }
         $this->business->refresh();
     }
@@ -89,7 +93,11 @@ class QueueDashboard extends Component
 
     public function resumeQueue(QueueService $queueService)
     {
-        $queueService->openQueue($this->business);
+        try {
+            $queueService->openQueue($this->business);
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
         $this->business->refresh();
     }
 

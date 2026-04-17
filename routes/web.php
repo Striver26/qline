@@ -6,13 +6,28 @@ use App\Http\Controllers\InviteController;
 Route::view('/', 'welcome')->name('home');
 
 Route::get('dashboard', function () {
-    if (auth()->user()->role === \App\Enums\UserRole::SUPERADMIN || 
-        auth()->user()->role === \App\Enums\UserRole::PLATFORM_STAFF) {
+    if (
+        auth()->user()->role === \App\Enums\UserRole::SUPERADMIN ||
+        auth()->user()->role === \App\Enums\UserRole::PLATFORM_STAFF
+    ) {
         return redirect()->route('admin.dashboard');
     }
 
     return redirect()->route('business.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('contact', function () {
+    return view('contact');
+})->name('contact');
+
+Route::get('/lang/{locale}', function ($locale) {
+    if (!in_array($locale, ['en', 'ms'])) {
+        abort(400);
+    }
+
+    session(['locale' => $locale]);
+    return back();
+})->name('lang.switch');
 
 // Webhooks
 Route::get('/webhook/whatsapp', [\App\Http\Controllers\Webhooks\WhatsAppWebhookController::class, 'verify']);

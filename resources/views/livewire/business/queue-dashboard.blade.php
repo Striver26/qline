@@ -1,4 +1,15 @@
 <div class="space-y-8" wire:poll.10s>
+    @if(session('error'))
+        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-500/30 dark:bg-rose-500/10">
+            <div class="flex items-center gap-3">
+                <flux:icon.exclamation-circle class="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                <p class="text-sm font-medium text-rose-800 dark:text-rose-300">
+                    {{ session('error') }}
+                </p>
+            </div>
+        </div>
+    @endif
+
     <div class="page-header">
         <div>
             <span class="page-kicker">{{ $business->name ?? 'Your Business' }}</span>
