@@ -33,6 +33,11 @@ class QueueEntries extends Component
             $query->where(function($q) {
                 $q->where('ticket_code', 'like', '%' . $this->search . '%')
                   ->orWhere('wa_id', 'like', '%' . $this->search . '%');
+
+                if (strtolower($this->search) === 'anonymous') {
+                    $q->orWhereNull('wa_id')
+                      ->orWhere('source', 'anonymous');
+                }
             });
         }
 
@@ -46,4 +51,3 @@ class QueueEntries extends Component
             ->layout('layouts.app');
     }
 }
-

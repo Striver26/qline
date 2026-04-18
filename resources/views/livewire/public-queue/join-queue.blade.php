@@ -102,7 +102,7 @@
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div class="soft-card">
                         <p class="metric-label">Flexible Join</p>
-                        <p class="mt-3 text-sm font-semibold text-slate-800">Walk-ins work too, even without a phone number.</p>
+                        <p class="mt-3 text-sm font-semibold text-slate-800">Anonymous tickets work too, even without a phone number.</p>
                     </div>
                     <div class="soft-card">
                         <p class="metric-label">Live Tracking</p>
@@ -115,8 +115,17 @@
 
     <div x-data x-init="
         let tickets = JSON.parse(localStorage.getItem('qline_active_tickets') || '{}');
-        if (tickets['{{ $business->slug }}']) {
-            window.location.href = '/q/{{ $business->slug }}/status/' + tickets['{{ $business->slug }}'];
+        let today = new Date().toISOString().split('T')[0];
+        let ticket = tickets['{{ $business->slug }}'];
+        
+        if (ticket) {
+            if (ticket.date === today) {
+                window.location.href = '/q/{{ $business->slug }}/status/' + ticket.token;
+            } else {
+                // Clear stale ticket from previous day
+                delete tickets['{{ $business->slug }}'];
+                localStorage.setItem('qline_active_tickets', JSON.stringify(tickets));
+            }
         }
     "></div>
 </div>

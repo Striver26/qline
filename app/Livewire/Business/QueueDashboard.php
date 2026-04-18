@@ -101,6 +101,16 @@ class QueueDashboard extends Component
         $this->business->refresh();
     }
 
+    public function addCustomer(QueueService $queueService)
+    {
+        try {
+            $queueService->addManual($this->business);
+            $this->business->refresh();
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function redeemReward($rewardId)
     {
         $reward = \App\Models\Marketing\EarnedReward::where('business_id', $this->business->id)

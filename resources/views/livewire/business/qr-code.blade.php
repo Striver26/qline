@@ -4,7 +4,7 @@
             <span class="page-kicker">Customer Entry Point</span>
             <h1 class="page-title mt-4">QR Code Standee</h1>
             <p class="page-description mt-3">
-                Print this standee and place it where walk-ins arrive so customers can join the queue without asking staff what to do.
+                Print this standee and place it where customers arrive so they can join the queue without asking staff what to do.
             </p>
         </div>
 
@@ -24,7 +24,7 @@
                 </div>
                 <div class="soft-card">
                     <p class="text-sm font-semibold text-slate-900 dark:text-white">2. They join in seconds.</p>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">They can use WhatsApp for updates or join as a simple web walk-in.</p>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">They can use WhatsApp for updates or join as an Anonymous customer.</p>
                 </div>
                 <div class="soft-card">
                     <p class="text-sm font-semibold text-slate-900 dark:text-white">3. They track their turn live.</p>

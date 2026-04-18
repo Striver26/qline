@@ -144,7 +144,7 @@ class QueueService
                 'ticket_number' => $number,
                 'ticket_code' => $code,
                 'status' => QueueStatus::WAITING->value,
-                'source' => 'manual',
+                'source' => 'anonymous',
                 'cancel_token' => Str::random(32),
                 'position' => $position
             ]);

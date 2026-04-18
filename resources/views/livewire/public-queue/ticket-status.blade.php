@@ -5,7 +5,10 @@
         init() {
             window.addEventListener('ticket-joined', (e) => {
                 let tickets = JSON.parse(localStorage.getItem('qline_active_tickets') || '{}');
-                tickets[e.detail.slug] = e.detail.id;
+                tickets[e.detail.slug] = {
+                    token: e.detail.token,
+                    date: e.detail.date
+                };
                 localStorage.setItem('qline_active_tickets', JSON.stringify(tickets));
             });
             window.addEventListener('ticket-cleared', (e) => {

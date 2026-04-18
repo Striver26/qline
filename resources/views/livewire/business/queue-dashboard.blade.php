@@ -40,6 +40,16 @@
             @endif
 
             <flux:button
+                wire:click="addCustomer"
+                variant="subtle"
+                class="rounded-full px-5 py-2.5 font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10"
+                :disabled="$business->queue_status !== 'open'"
+            >
+                <flux:icon.plus class="mr-2 h-4 w-4" />
+                Quick Add
+            </flux:button>
+
+            <flux:button
                 wire:click="toggleQueue"
                 class="rounded-full px-5 py-2.5 font-semibold shadow-[0_24px_60px_-32px_rgba(15,23,42,0.4)]"
                 style="{{ $business->queue_status !== 'closed' ? '' : 'background: linear-gradient(135deg, #149f7c, #0f7f66); border-color: #149f7c; color: white;' }}"
@@ -107,7 +117,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-900 dark:text-white">
-                                    {{ $entry->wa_id ? $entry->wa_id : 'Walk-in customer' }}
+                                    {{ $entry->wa_id ? $entry->wa_id : 'Anonymous' }}
                                 </p>
                                 <p class="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">
                                     {{ ucfirst($entry->status) }}
@@ -172,7 +182,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $entry->ticket_code }}</p>
                             <p class="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">
-                                {{ $entry->source === 'whatsapp' ? 'WhatsApp' : 'Walk-in' }}
+                                {{ $entry->source === 'whatsapp' ? 'WhatsApp' : 'Anonymous' }}
                             </p>
                         </div>
 

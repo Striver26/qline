@@ -58,7 +58,7 @@ class JoinQueue extends Component
                 $ticket = $queueService->addManual($this->business);
             }
 
-            return redirect()->route('public.status', ['slug' => $this->business->slug, 'id' => $ticket->id]);
+            return redirect()->route('public.status', ['slug' => $this->business->slug, 'token' => $ticket->cancel_token]);
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
         }

@@ -18,7 +18,7 @@ class AdminDumpDataSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create();
-        
+
         // Let's create 15 Businesses and their Owners
         for ($i = 0; $i < 15; $i++) {
             // Create Owner
@@ -70,9 +70,9 @@ class AdminDumpDataSeeder extends Seeder
             $queueCount = rand(5, 25);
             for ($q = 1; $q <= $queueCount; $q++) {
                 $status = $faker->randomElement(['waiting', 'called', 'serving', 'completed', 'skipped', 'cancelled']);
-                
+
                 $wa_id = $faker->boolean(70) ? '+601' . $faker->randomNumber(8, true) : null;
-                $source = $wa_id ? 'whatsapp' : 'walk-in';
+                $source = $wa_id ? 'whatsapp' : 'Anonymous';
 
                 $entry = QueueEntry::create([
                     'business_id' => $business->id,

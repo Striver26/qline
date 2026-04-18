@@ -14,17 +14,21 @@ class TicketStatus extends Component
     public QueueEntry $entry;
     public string $currentStatus;
 
-    public function mount($slug, $id)
+    public function mount($slug, $token)
     {
         $this->business = Business::where('slug', $slug)->firstOrFail();
-        $this->entry = QueueEntry::where('id', $id)
+        $this->entry = QueueEntry::where('cancel_token', $token)
             ->where('business_id', $this->business->id)
             ->firstOrFail();
             
         $this->currentStatus = $this->entry->status;
 
-        // Ensure browser remembers this ticket
-        $this->dispatch('ticket-joined', slug: $slug, id: $id);
+        // Ensure browser remembers this ticket and that it is for "today"
+        $this->dispatch('ticket-joined', 
+            slug: $slug, 
+            token: $token, 
+            date: now()->toDateString()
+        );
     }
 
     #[\Livewire\Attributes\Computed]
