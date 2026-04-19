@@ -16,6 +16,7 @@ class Business extends Model
         'city',
         'state',
         'postcode',
+        'business_hours',
         'pause_reason',
         'is_active',
         'queue_status',

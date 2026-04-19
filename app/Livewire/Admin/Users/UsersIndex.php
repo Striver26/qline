@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Livewire\Admin\Users;
+
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
@@ -10,11 +12,21 @@ use Illuminate\Validation\Rule;
 class UsersIndex extends Component
 {
     use WithPagination;
+
     public $search = '';
+    public $filterRole = '';   // FIX: was missing — blade had wire:model.live="filterRole"
+
     public $inviteEmail = '';
     public $inviteRole = 'platform_staff';
 
-    public function updatedSearch() { $this->resetPage(); }
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatedFilterRole()
+    {
+        $this->resetPage();
+    } // FIX: was missing
 
     public function inviteStaff()
     {
@@ -22,9 +34,9 @@ class UsersIndex extends Component
             'inviteEmail' => ['required', 'email', Rule::unique('users', 'email')],
             'inviteRole' => 'required|string',
         ]);
-        
+
         $password = Str::random(10);
-        
+
         User::create([
             'name' => 'Invited Staff',
             'email' => $this->inviteEmail,
@@ -33,21 +45,20 @@ class UsersIndex extends Component
             'email_verified_at' => now(),
             'profile_completed' => true,
         ]);
-        
-        // Dispatch the automated mail invitation
+
         \Illuminate\Support\Facades\Mail::to($this->inviteEmail)->send(
             new \App\Mail\PlatformStaffInvitationMail(role: $this->inviteRole, password: $password)
         );
-        
+
         session()->flash('status', "Staff created successfully! An email containing the password ({$password}) has been sent.");
-        
+
         $this->reset('inviteEmail');
         $this->dispatch('modal-close', name: 'invite-staff');
     }
 
     public $editingUserId = null;
     public $editRole = '';
-    
+
     public function editUser($id)
     {
         $user = User::findOrFail($id);
@@ -96,7 +107,17 @@ class UsersIndex extends Component
     public function render()
     {
         $users = User::query()
-            ->when($this->search, fn($q) => $q->where('name', 'like', '%'.$this->search.'%')->orWhere('email', 'like', '%'.$this->search.'%'))
+            ->when(
+                $this->search,
+                fn($q) =>
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%')
+            )
+            ->when(
+                $this->filterRole,
+                fn($q) =>   // FIX: filter was declared in blade but never applied
+                $q->where('role', $this->filterRole)
+            )
             ->latest()
             ->paginate(15);
 

@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Livewire\Admin\Businesses;
+
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Tenant\Business;
@@ -7,13 +9,22 @@ use App\Models\Tenant\Business;
 class BusinessesIndex extends Component
 {
     use WithPagination;
-    public $search = '';
 
-    public function updatedSearch() { $this->resetPage(); }
+    public $search = '';
+    public $filterStatus = '';
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatedFilterStatus()
+    {
+        $this->resetPage();
+    } // FIX: was missing
 
     public $editingBizId = null;
     public $editStatus = '';
-    
+
     public function editStatus($id)
     {
         $biz = Business::findOrFail($id);
@@ -47,8 +58,18 @@ class BusinessesIndex extends Component
 
     public function render()
     {
-        $businesses = Business::query() // Removed with('users') since not loaded in the view!
-            ->when($this->search, fn($q) => $q->where('name', 'like', '%'.$this->search.'%')->orWhere('join_code', 'like', '%'.$this->search.'%'))
+        $businesses = Business::query()
+            ->when(
+                $this->search,
+                fn($q) =>
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('join_code', 'like', '%' . $this->search . '%')
+            )
+            ->when(
+                $this->filterStatus,
+                fn($q) =>  // FIX: filter was declared in blade but never applied
+                $q->where('queue_status', $this->filterStatus)
+            )
             ->latest()
             ->paginate(15);
 

@@ -8,9 +8,9 @@ class LoyaltyReward extends Model
 {
     protected $fillable = [
         'business_id',
-        'name',
-        'description',
         'required_visits',
+        'reward_type',
+        'reward_value',
         'is_active',
     ];
 
@@ -25,5 +25,10 @@ class LoyaltyReward extends Model
     public function business()
     {
         return $this->belongsTo(\App\Models\Tenant\Business::class);
+    }
+
+    public function earnedRewards()
+    {
+        return $this->hasMany(\App\Models\Marketing\EarnedReward::class);
     }
 }
