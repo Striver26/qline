@@ -13,8 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(append: [
-            SetLocale::class,
+        $middleware->web(append: [SetLocale::class]);
+        $middleware->preventRequestForgery(except: [
+            '/webhook/billplz/*',
+            '/webhook/whatsapp',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
