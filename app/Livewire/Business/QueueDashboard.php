@@ -25,7 +25,7 @@ class QueueDashboard extends Component
     {
         return QueueEntry::where('business_id', $this->business->id)
             ->where('status', QueueStatus::WAITING->value)
-            ->orderBy('position', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
     }
 
@@ -44,26 +44,26 @@ class QueueDashboard extends Component
         $this->business->refresh();
     }
 
-    public function markServing(QueueService $queueService, $entryId)
+    public function markServing(QueueService $queueService, int $entryId)
     {
-        $entry = QueueEntry::find($entryId);
-        if ($entry && $entry->business_id === $this->business->id) {
+        $entry = $this->getBusinessEntry($entryId);
+        if ($entry) {
             $queueService->markServing($entry);
         }
     }
 
-    public function markDone(QueueService $queueService, $entryId)
+    public function markDone(QueueService $queueService, int $entryId)
     {
-        $entry = QueueEntry::find($entryId);
-        if ($entry && $entry->business_id === $this->business->id) {
+        $entry = $this->getBusinessEntry($entryId);
+        if ($entry) {
             $queueService->markDone($entry);
         }
     }
 
-    public function skip(QueueService $queueService, $entryId)
+    public function skip(QueueService $queueService, int $entryId)
     {
-        $entry = QueueEntry::find($entryId);
-        if ($entry && $entry->business_id === $this->business->id) {
+        $entry = $this->getBusinessEntry($entryId);
+        if ($entry) {
             $queueService->skip($entry);
         }
     }
@@ -71,7 +71,7 @@ class QueueDashboard extends Component
     public function toggleQueue(QueueService $queueService)
     {
         try {
-            if ($this->business->queue_status === 'open' || $this->business->queue_status === 'paused') {
+            if ($this->isQueueActive()) {
                 $queueService->closeQueue($this->business);
             } else {
                 $queueService->openQueue($this->business);
@@ -111,18 +111,9 @@ class QueueDashboard extends Component
         }
     }
 
-    public function redeemReward($rewardId)
+    public function redeemReward(\App\Services\Marketing\RewardService $rewardService, int $rewardId)
     {
-        $reward = \App\Models\Marketing\EarnedReward::where('business_id', $this->business->id)
-            ->where('id', $rewardId)
-            ->where('status', 'available')
-            ->first();
-
-        if ($reward) {
-            $reward->update([
-                'status' => 'redeemed',
-                'redeemed_at' => now(),
-            ]);
+        if ($rewardService->redeem($rewardId, $this->business)) {
             $this->dispatch('reward-redeemed');
         }
     }
@@ -131,6 +122,25 @@ class QueueDashboard extends Component
     {
         return view('livewire.business.queue-dashboard')
             ->layout('layouts.app');
+    }
+
+    /**
+     * Helper to safely fetch an entry explicitly constrained to the logged-in business.
+     */
+    private function getBusinessEntry(int $entryId): ?QueueEntry
+    {
+        return QueueEntry::where('business_id', $this->business->id)->find($entryId);
+    }
+
+    /**
+     * Check if the queue is open or paused.
+     */
+    private function isQueueActive(): bool
+    {
+        return in_array($this->business->queue_status, [
+            \App\Enums\BusinessQueueStatus::OPEN->value, 
+            \App\Enums\BusinessQueueStatus::PAUSED->value
+        ], true);
     }
 }
 

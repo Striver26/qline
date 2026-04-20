@@ -23,12 +23,7 @@ class TicketStatus extends Component
             
         $this->currentStatus = $this->entry->status;
 
-        // Ensure browser remembers this ticket and that it is for "today"
-        $this->dispatch('ticket-joined', 
-            slug: $slug, 
-            token: $token, 
-            date: now()->toDateString()
-        );
+        $this->dispatchStoragePersistance($slug, $token);
     }
 
     #[\Livewire\Attributes\Computed]
@@ -40,29 +35,13 @@ class TicketStatus extends Component
     #[\Livewire\Attributes\Computed]
     public function statusLabel()
     {
-        return match($this->entry->status) {
-            QueueStatus::WAITING->value => 'Waiting',
-            QueueStatus::CALLED->value => 'Called',
-            QueueStatus::SERVING->value => 'Being Served',
-            QueueStatus::COMPLETED->value => 'Completed',
-            QueueStatus::SKIPPED->value => 'Skipped',
-            QueueStatus::CANCELLED->value => 'Cancelled',
-            default => $this->entry->status,
-        };
+        return QueueStatus::tryFrom($this->entry->status)?->getLabel() ?? $this->entry->status;
     }
 
     #[\Livewire\Attributes\Computed]
     public function statusColor()
     {
-        return match($this->entry->status) {
-            QueueStatus::WAITING->value => 'text-amber-400',
-            QueueStatus::CALLED->value => 'text-teal-400',
-            QueueStatus::SERVING->value => 'text-blue-400',
-            QueueStatus::COMPLETED->value => 'text-emerald-400',
-            QueueStatus::SKIPPED->value => 'text-orange-400',
-            QueueStatus::CANCELLED->value => 'text-red-400',
-            default => 'text-slate-400',
-        };
+        return QueueStatus::tryFrom($this->entry->status)?->getColor() ?? 'text-slate-400';
     }
 
     public function cancelTicket()
@@ -79,7 +58,9 @@ class TicketStatus extends Component
     #[\Livewire\Attributes\Computed]
     public function loyaltyPoints()
     {
-        if (!$this->entry->wa_id) return null;
+        if (!$this->entry->wa_id) {
+            return null;
+        }
 
         $visits = \App\Models\Marketing\LoyaltyVisit::where('business_id', $this->business->id)
             ->where('wa_id', $this->entry->wa_id)
@@ -90,37 +71,14 @@ class TicketStatus extends Component
             ->where('status', 'available')
             ->first();
 
-        // Cyclic Loyalty Logic: Calculate next milestone for all active rewards
-        $rewards = \App\Models\Marketing\LoyaltyReward::where('business_id', $this->business->id)
-            ->get();
-
-        $nextRewardIn = null;
-        $nextRewardName = null;
-
-        foreach ($rewards as $reward) {
-            if ($reward->required_visits <= 0) continue;
-
-            // How many visits remaining in the current cycle for this reward
-            $progress = $visits % $reward->required_visits;
-            $remaining = $reward->required_visits - $progress;
-
-            // If remaining matches required_visits and we have no reward pending, 
-            // it means they are at the start of a cycle. 
-            // If they HAVE a reward pending, we don't need to show 'Next' yet as 
-            // the 'has_reward' check takes precedence in the Blade.
-
-            if ($nextRewardIn === null || $remaining < $nextRewardIn) {
-                $nextRewardIn = $remaining;
-                $nextRewardName = $reward->reward_value;
-            }
-        }
+        $nextMilestone = $this->calculateNextMilestone($visits);
 
         return [
             'visits' => $visits,
-            'has_reward' => !!$availableReward,
+            'has_reward' => (bool) $availableReward,
             'reward_name' => $availableReward?->reward?->reward_value ?? 'Gift',
-            'next_reward_in' => $nextRewardIn,
-            'next_reward_name' => $nextRewardName
+            'next_reward_in' => $nextMilestone['in'],
+            'next_reward_name' => $nextMilestone['name']
         ];
     }
 
@@ -131,5 +89,45 @@ class TicketStatus extends Component
 
         return view('livewire.public-queue.ticket-status')
             ->layout('layouts.public');
+    }
+
+    /**
+     * Emit event to explicitly ensure the browser registers session data globally.
+     */
+    private function dispatchStoragePersistance(string $slug, string $token): void
+    {
+        $this->dispatch('ticket-joined', 
+            slug: $slug, 
+            token: $token, 
+            date: now()->toDateString()
+        );
+    }
+
+    /**
+     * Compute the exact distance to the next cyclic reward milestone mathematically.
+     */
+    private function calculateNextMilestone(int $visits): array
+    {
+        $rewards = \App\Models\Marketing\LoyaltyReward::where('business_id', $this->business->id)->get();
+
+        $nextRewardIn = null;
+        $nextRewardName = null;
+
+        foreach ($rewards as $reward) {
+            if ($reward->required_visits <= 0) continue;
+
+            $progress = $visits % $reward->required_visits;
+            $remaining = $reward->required_visits - $progress;
+
+            if ($nextRewardIn === null || $remaining < $nextRewardIn) {
+                $nextRewardIn = $remaining;
+                $nextRewardName = $reward->reward_value;
+            }
+        }
+
+        return [
+            'in' => $nextRewardIn,
+            'name' => $nextRewardName
+        ];
     }
 }

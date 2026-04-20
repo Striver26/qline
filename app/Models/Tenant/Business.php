@@ -3,6 +3,9 @@
 namespace App\Models\Tenant;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class Business extends Model
 {
@@ -11,6 +14,7 @@ class Business extends Model
         'name',
         'slug',
         'join_code',
+        'tv_token',
         'phone',
         'address',
         'city',
@@ -28,7 +32,6 @@ class Business extends Model
         'last_reset_at',
     ];
 
-    // Cast properties
     protected function casts(): array
     {
         return [
@@ -36,50 +39,51 @@ class Business extends Model
         ];
     }
 
-    // The staff/owners connected to this business
-    public function users()
+    protected static function booted()
+    {
+        static::creating(function ($business) {
+            if (empty($business->tv_token)) {
+                $business->tv_token = Str::random(32);
+            }
+        });
+    }
+
+    public function users(): HasMany
     {
         return $this->hasMany(\App\Models\User::class);
     }
 
-    // The active subscription for this business
-    public function subscription()
+    public function subscription(): HasOne
     {
         return $this->hasOne(\App\Models\Tenant\Subscription::class);
     }
 
-    // Billing history
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(\App\Models\Tenant\Payment::class);
     }
 
-    // Historical queue tickets
-    public function queueEntries()
+    public function queueEntries(): HasMany
     {
         return $this->hasMany(\App\Models\Queue\QueueEntry::class);
     }
 
-    // Physical counters
-    public function counters()
+    public function counters(): HasMany
     {
         return $this->hasMany(\App\Models\Tenant\Counter::class);
     }
 
-    // Customer feedbacks
-    public function customerFeedbacks()
+    public function customerFeedbacks(): HasMany
     {
         return $this->hasMany(\App\Models\Marketing\CustomerFeedback::class);
     }
 
-    // Loyalty reward programs
-    public function loyaltyRewards()
+    public function loyaltyRewards(): HasMany
     {
         return $this->hasMany(\App\Models\Marketing\LoyaltyReward::class);
     }
 
-    // Customer loyalty visits
-    public function loyaltyVisits()
+    public function loyaltyVisits(): HasMany
     {
         return $this->hasMany(\App\Models\Marketing\LoyaltyVisit::class);
     }

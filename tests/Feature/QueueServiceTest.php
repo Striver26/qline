@@ -12,7 +12,7 @@ beforeEach(function () {
         'slug' => 'test-business',
         'join_code' => 'JOIN01',
         'queue_prefix' => 'T',
-        'queue_status' => 'open',
+        'queue_status' => \App\Enums\BusinessQueueStatus::OPEN->value,
         'current_number' => 0,
         'entries_today' => 0,
         'daily_limit' => 100,
@@ -29,19 +29,19 @@ it('can join an open queue', function () {
     expect($entry)->toBeInstanceOf(QueueEntry::class);
     expect($entry->status)->toBe(QueueStatus::WAITING->value);
     expect($entry->ticket_code)->toStartWith('T');
-    expect($entry->position)->toBe(1);
+    expect($this->service->getPositionInfo($entry)['position'])->toBe(1);
     expect($entry->wa_id)->toBe('60123456789');
     expect($entry->source)->toBe('whatsapp');
 });
 
 it('rejects joining a closed queue', function () {
-    $this->business->update(['queue_status' => 'closed']);
+    $this->business->update(['queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value]);
 
     $this->service->join($this->business, '60123456789');
 })->throws(Exception::class, 'The queue is currently closed.');
 
 it('rejects joining a paused queue', function () {
-    $this->business->update(['queue_status' => 'paused']);
+    $this->business->update(['queue_status' => \App\Enums\BusinessQueueStatus::PAUSED->value]);
 
     $this->service->join($this->business, '60123456789');
 })->throws(Exception::class, 'The queue is currently closed.');
@@ -68,8 +68,8 @@ it('assigns correct positions on join', function () {
     $e1 = $this->service->join($this->business, '60111111111');
     $e2 = $this->service->join($this->business, '60222222222');
 
-    expect($e1->position)->toBe(1);
-    expect($e2->position)->toBe(2);
+    expect($this->service->getPositionInfo($e1)['position'])->toBe(1);
+    expect($this->service->getPositionInfo($e2)['position'])->toBe(2);
 });
 
 // --- Manual Add ---
@@ -78,9 +78,9 @@ it('can manually add a ticket', function () {
     $entry = $this->service->addManual($this->business);
 
     expect($entry)->toBeInstanceOf(QueueEntry::class);
-    expect($entry->source)->toBe('manual');
+    expect($entry->source)->toBe('anonymous');
     expect($entry->wa_id)->toBeNull();
-    expect($entry->position)->toBe(1);
+    expect($this->service->getPositionInfo($entry)['position'])->toBe(1);
 });
 
 // --- Call Next ---
@@ -94,11 +94,9 @@ it('calls the next waiting ticket', function () {
     expect($called->id)->toBe($e1->id);
     expect($called->status)->toBe(QueueStatus::CALLED->value);
     expect($called->called_at)->not->toBeNull();
-    expect($called->position)->toBe(0);
 
-    // Second entry should now be position 1
-    $e2->refresh();
-    expect($e2->position)->toBe(1);
+    // Second entry should now be position 1 (dynamic computation)
+    expect($this->service->getPositionInfo($e2)['position'])->toBe(1);
 });
 
 it('returns null when no tickets are waiting', function () {
@@ -146,11 +144,9 @@ it('marks a ticket as skipped', function () {
 
     $e1->refresh();
     expect($e1->status)->toBe(QueueStatus::SKIPPED->value);
-    expect($e1->position)->toBe(0);
 
     // Second entry should now be position 1
-    $e2->refresh();
-    expect($e2->position)->toBe(1);
+    expect($this->service->getPositionInfo($e2)['position'])->toBe(1);
 });
 
 // --- Cancel ---
@@ -163,10 +159,8 @@ it('cancels a waiting ticket', function () {
 
     $e1->refresh();
     expect($e1->status)->toBe(QueueStatus::CANCELLED->value);
-    expect($e1->position)->toBe(0);
 
-    $e2->refresh();
-    expect($e2->position)->toBe(1);
+    expect($this->service->getPositionInfo($e2)['position'])->toBe(1);
 });
 
 // --- Close Queue ---
@@ -190,7 +184,7 @@ it('cancels all active tickets and resets counters when queue is closed', functi
 
     expect($e1->status)->toBe(QueueStatus::CANCELLED->value);
     expect($e2->status)->toBe(QueueStatus::CANCELLED->value);
-    expect($this->business->queue_status)->toBe('closed');
+    expect($this->business->queue_status)->toBe(\App\Enums\BusinessQueueStatus::CLOSED->value);
     expect($this->business->current_number)->toBe(0);
     expect($this->business->entries_today)->toBe(0);
 });
@@ -217,13 +211,13 @@ it('opens queue and resets daily counters', function () {
     $this->service->openQueue($this->business->refresh());
     $this->business->refresh();
 
-    expect($this->business->queue_status)->toBe('open');
+    expect($this->business->queue_status)->toBe(\App\Enums\BusinessQueueStatus::OPEN->value);
     expect($this->business->current_number)->toBe(0);
     expect($this->business->entries_today)->toBe(0);
 });
 
 it('rejects opening queue without active subscription', function () {
-    $this->business->update(['queue_status' => 'closed']);
+    $this->business->update(['queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value]);
 
     $this->service->openQueue($this->business);
 })->throws(Exception::class, 'active subscription');
@@ -234,7 +228,7 @@ it('pauses queue with a reason', function () {
     $this->service->pauseQueue($this->business, 'Lunch break');
     $this->business->refresh();
 
-    expect($this->business->queue_status)->toBe('paused');
+    expect($this->business->queue_status)->toBe(\App\Enums\BusinessQueueStatus::PAUSED->value);
     expect($this->business->pause_reason)->toBe('Lunch break');
 });
 
@@ -248,9 +242,6 @@ it('recalculates positions correctly after removal', function () {
     // Call the first ticket (removes from waiting)
     $this->service->callNext($this->business);
 
-    $e2->refresh();
-    $e3->refresh();
-
-    expect($e2->position)->toBe(1);
-    expect($e3->position)->toBe(2);
+    expect($this->service->getPositionInfo($e2)['position'])->toBe(1);
+    expect($this->service->getPositionInfo($e3)['position'])->toBe(2);
 });

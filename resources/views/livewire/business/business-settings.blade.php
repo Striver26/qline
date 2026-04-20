@@ -17,7 +17,7 @@
             <div class="soft-card">
                 <p class="metric-label">Basic Information</p>
                 <div class="mt-5 space-y-5">
-                    <flux:input wire:model="name" :label="__('Business Name')" placeholder="e.g. Warung Ahmad" type="text" required autofocus />
+                    <flux:input wire:model="form.name" :label="__('Business Name')" placeholder="e.g. Warung Ahmad" type="text" required autofocus />
                 </div>
             </div>
 
@@ -32,7 +32,7 @@
                                 JOIN
                             </flux:input.group.prefix>
 
-                            <flux:input wire:model="join_code" placeholder="AHMAD" class="font-bold uppercase tracking-wider" required />
+                            <flux:input wire:model="form.join_code" placeholder="AHMAD" class="font-bold uppercase tracking-wider" required />
                         </flux:input.group>
 
                         <flux:description>{{ __('Customers send this keyword to join your queue.') }}</flux:description>
@@ -41,7 +41,7 @@
 
                     <flux:field>
                         <flux:label>{{ __('Ticket Prefix') }}</flux:label>
-                        <flux:input wire:model="queue_prefix" placeholder="A" maxlength="3" class="font-bold uppercase tracking-wider" required />
+                        <flux:input wire:model="form.queue_prefix" placeholder="A" maxlength="3" class="font-bold uppercase tracking-wider" required />
                         <flux:description>{{ __('Example: A001, B002') }}</flux:description>
                         <flux:error name="queue_prefix" />
                     </flux:field>
@@ -51,12 +51,12 @@
             <div class="soft-card">
                 <p class="metric-label">Contact Details</p>
                 <div class="mt-5 space-y-5">
-                    <flux:input wire:model="phone" :label="__('Support Phone Number')" placeholder="+60123456789" type="text" />
-                    <flux:textarea wire:model="address" :label="__('Business Address')" rows="2" placeholder="Your business location..." />
+                    <flux:input wire:model="form.phone" :label="__('Support Phone Number')" placeholder="+60123456789" type="text" />
+                    <flux:textarea wire:model="form.address" :label="__('Business Address')" rows="2" placeholder="Your business location..." />
                     <div class="grid gap-5 sm:grid-cols-3">
-                        <flux:input wire:model="city" :label="__('City')" placeholder="e.g. Kuala Lumpur" type="text" />
-                        <flux:input wire:model="state" :label="__('State')" placeholder="e.g. WP" type="text" />
-                        <flux:input wire:model="postcode" :label="__('Postcode')" placeholder="e.g. 50000" type="text" />
+                        <flux:input wire:model="form.city" :label="__('City')" placeholder="e.g. Kuala Lumpur" type="text" />
+                        <flux:input wire:model="form.state" :label="__('State')" placeholder="e.g. WP" type="text" />
+                        <flux:input wire:model="form.postcode" :label="__('Postcode')" placeholder="e.g. 50000" type="text" />
                     </div>
                 </div>
             </div>
@@ -64,7 +64,7 @@
             <div class="soft-card">
                 <p class="metric-label">Operating Hours</p>
                 <div class="mt-5 space-y-5">
-                    <flux:textarea wire:model="business_hours" :label="__('Business Hours')" rows="3" placeholder="Monday - Friday: 9am - 5pm&#10;Saturday: 10am - 2pm&#10;Sunday: Closed" />
+                    <flux:textarea wire:model="form.business_hours" :label="__('Business Hours')" rows="3" placeholder="Monday - Friday: 9am - 5pm&#10;Saturday: 10am - 2pm&#10;Sunday: Closed" />
                     <flux:description>{{ __('Let your customers know when they can physically visit.') }}</flux:description>
                 </div>
             </div>

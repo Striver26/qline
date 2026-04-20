@@ -18,6 +18,7 @@ class EarnedReward extends Model
     {
         return [
             'redeemed_at' => 'datetime',
+            'status' => \App\Enums\RewardStatus::class,
         ];
     }
 

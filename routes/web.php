@@ -46,7 +46,7 @@ Route::post('/register/invite/{token}', [InviteController::class, 'process'])->n
 // Public Queue App
 Route::get('/q/{slug}/status/{token}', \App\Livewire\PublicQueue\TicketStatus::class)->name('public.status');
 Route::get('/q/{slug}/tv', \App\Livewire\PublicQueue\TvDisplay::class)->name('public.tv');
-Route::get('/q/{slug}/join', \App\Livewire\PublicQueue\JoinQueue::class)->name('public.join');
+Route::get('/q/{slug}/join', \App\Livewire\PublicQueue\JoinQueue::class)->middleware('throttle:5,1')->name('public.join');
 Route::get('/q/{slug}/feedback/{token}', \App\Livewire\PublicQueue\FeedbackForm::class)->name('public.feedback');
 
 // Business Panel

@@ -11,8 +11,12 @@ class FeedbackForm extends Component
 {
     public Business $business;
     public QueueEntry $entry;
+    #[\Livewire\Attributes\Validate('required|integer|min:1|max:5')]
     public int $rating = 0;
+
+    #[\Livewire\Attributes\Validate('nullable|string|max:500')]
     public string $comment = '';
+
     public bool $submitted = false;
     public bool $alreadySubmitted = false;
 
@@ -23,8 +27,12 @@ class FeedbackForm extends Component
             ->where('business_id', $this->business->id)
             ->firstOrFail();
 
-        // Check if feedback already exists
-        if ($this->entry->customerFeedback) {
+        $this->checkExistingFeedback();
+    }
+
+    private function checkExistingFeedback(): void
+    {
+        if ($this->entry->customerFeedback()->exists()) {
             $this->alreadySubmitted = true;
         }
     }
@@ -36,11 +44,13 @@ class FeedbackForm extends Component
 
     public function submitFeedback()
     {
-        $this->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:500',
-        ]);
+        $this->validate();
+        $this->storeFeedbackRecord();
+        $this->submitted = true;
+    }
 
+    private function storeFeedbackRecord(): void
+    {
         CustomerFeedback::create([
             'business_id' => $this->business->id,
             'queue_entry_id' => $this->entry->id,
@@ -48,8 +58,6 @@ class FeedbackForm extends Component
             'rating' => $this->rating,
             'comment' => $this->comment ?: null,
         ]);
-
-        $this->submitted = true;
     }
 
     public function render()

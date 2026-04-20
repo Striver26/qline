@@ -3,6 +3,9 @@
 namespace App\Models\Queue;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class QueueEntry extends Model
 {
@@ -16,31 +19,37 @@ class QueueEntry extends Model
         'cancel_token',
         'position',
         'counter_id',
+        'processed_by_user_id',
         'called_at',
         'served_at',
         'completed_at',
     ];
 
-    // The business this ticket belongs to
-    public function business()
+    protected function casts(): array
+    {
+        return [
+            'called_at' => 'datetime',
+            'served_at' => 'datetime',
+            'completed_at' => 'datetime',
+        ];
+    }
+
+    public function business(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Tenant\Business::class);
     }
 
-    // The physical counter this ticket was called to (if any)
-    public function counter()
+    public function counter(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Tenant\Counter::class);
     }
 
-    // Customer feedback submitted for this ticket
-    public function customerFeedback()
+    public function customerFeedback(): HasOne
     {
         return $this->hasOne(\App\Models\Marketing\CustomerFeedback::class);
     }
 
-    // WhatsApp messages related to this queue entry
-    public function whatsappMessages()
+    public function whatsappMessages(): HasMany
     {
         return $this->hasMany(\App\Models\Marketing\WhatsappMessage::class);
     }

@@ -9,26 +9,34 @@ use Illuminate\Support\Str;
 
 class StaffManagement extends Component
 {
+    #[\Livewire\Attributes\Validate('required|email|unique:users,email')]
     public $email;
 
     public function generateInvite()
     {
-        $this->validate([
-            'email' => 'required|email|unique:users,email'
-        ]);
+        $this->validate();
 
-        $token = Str::random(32);
+        $invitation = $this->createInvitationRecord();
+        $this->dispatchInvitationEmail($invitation);
 
-        $invitation = Invitation::create([
+        $this->reset('email');
+        session()->flash('success', 'Invitation sent to ' . $invitation->email . '!');
+    }
+
+    private function createInvitationRecord(): Invitation
+    {
+        return Invitation::create([
             'email' => $this->email,
-            'role' => 'business_staff',
+            'role' => \App\Enums\UserRole::BUSINESS_STAFF->value ?? 'business_staff',
             'business_id' => auth()->user()->business_id,
             'invited_by' => auth()->id(),
-            'token' => $token,
+            'token' => Str::random(32),
             'expires_at' => now()->addDays(3),
         ]);
+    }
 
-        // Send the invitation email
+    private function dispatchInvitationEmail(Invitation $invitation): void
+    {
         \Illuminate\Support\Facades\Mail::to($this->email)->send(
             new \App\Mail\StaffInvitationMail(
                 invitation: $invitation,
@@ -36,12 +44,9 @@ class StaffManagement extends Component
                 inviterName: auth()->user()->name,
             )
         );
-
-        $this->reset('email');
-        session()->flash('success', 'Invitation sent to ' . $invitation->email . '!');
     }
 
-    public function revokeInvite($inviteId)
+    public function revokeInvite(int $inviteId)
     {
         $invite = Invitation::where('business_id', auth()->user()->business_id)
             ->where('id', $inviteId)
@@ -52,7 +57,7 @@ class StaffManagement extends Component
         }
     }
 
-    public function deleteStaff($staffId)
+    public function deleteStaff(int $staffId)
     {
         $staff = User::where('business_id', auth()->user()->business_id)
             ->where('id', $staffId)
@@ -78,4 +83,3 @@ class StaffManagement extends Component
             ->layout('layouts.app');
     }
 }
-

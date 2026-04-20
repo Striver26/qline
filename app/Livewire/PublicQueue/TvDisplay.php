@@ -14,10 +14,21 @@ class TvDisplay extends Component
     public function mount($slug)
     {
         $this->business = Business::where('slug', $slug)->firstOrFail();
+        $this->authorizeDisplayAccess();
+    }
+
+    /**
+     * Prevent unauthorized viewing of the private TV feed.
+     */
+    private function authorizeDisplayAccess(): void
+    {
+        if (request()->query('token') !== $this->business->tv_token) {
+            abort(403, 'Unauthorized access to TV Display.');
+        }
     }
 
     #[\Livewire\Attributes\Computed]
-    public function nowServing()
+    public function nowServing(): \Illuminate\Database\Eloquent\Collection
     {
         return QueueEntry::where('business_id', $this->business->id)
             ->whereIn('status', [QueueStatus::CALLED->value, QueueStatus::SERVING->value])
@@ -27,17 +38,17 @@ class TvDisplay extends Component
     }
 
     #[\Livewire\Attributes\Computed]
-    public function waitingList()
+    public function waitingList(): \Illuminate\Database\Eloquent\Collection
     {
         return QueueEntry::where('business_id', $this->business->id)
             ->where('status', QueueStatus::WAITING->value)
-            ->orderBy('position', 'asc')
+            ->orderBy('id', 'asc')
             ->take(12)
             ->get();
     }
 
     #[\Livewire\Attributes\Computed]
-    public function waitingCount()
+    public function waitingCount(): int
     {
         return QueueEntry::where('business_id', $this->business->id)
             ->where('status', QueueStatus::WAITING->value)

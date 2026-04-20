@@ -19,16 +19,12 @@ class JoinQueue extends Component
 
     public function mount($slug)
     {
-        $this->business = Business::where('slug', $slug)->firstOrFail();
-
-        $this->activeReward = \App\Models\Marketing\LoyaltyReward::where('business_id', $this->business->id)
-            ->where('is_active', true)
-            ->orderBy('required_visits', 'asc')
-            ->first();
+        $this->loadBusinessBySlug($slug);
+        $this->loadActiveReward();
     }
 
     #[\Livewire\Attributes\Computed]
-    public function waitingCount()
+    public function waitingCount(): int
     {
         return QueueEntry::where('business_id', $this->business->id)
             ->where('status', QueueStatus::WAITING->value)
@@ -39,29 +35,57 @@ class JoinQueue extends Component
     {
         $this->errorMessage = '';
 
-        if ($this->business->queue_status !== 'open') {
-            if ($this->business->queue_status === 'paused') {
-                $this->errorMessage = 'Sorry, the queue is currently paused: ' . ($this->business->pause_reason ?: 'On a short break.');
-            } else {
-                $this->errorMessage = 'Sorry, the queue is currently closed.';
-            }
+        if (!$this->ensureQueueIsJoinable()) {
             return;
         }
 
-        // Clean up phone — allow empty for anonymous walk-ins
-        $waId = trim($this->phone) ?: null;
+        $waId = $this->sanitizePhone($this->phone);
 
         try {
-            if ($waId) {
-                $ticket = $queueService->join($this->business, $waId);
-            } else {
-                $ticket = $queueService->addManual($this->business);
-            }
+            $ticket = $waId 
+                ? $queueService->join($this->business, $waId) 
+                : $queueService->addManual($this->business);
 
-            return redirect()->route('public.status', ['slug' => $this->business->slug, 'token' => $ticket->cancel_token]);
+            return redirect()->route('public.status', [
+                'slug' => $this->business->slug, 
+                'token' => $ticket->cancel_token
+            ]);
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
         }
+    }
+
+    private function loadBusinessBySlug(string $slug): void
+    {
+        $this->business = Business::where('slug', $slug)->firstOrFail();
+    }
+
+    private function loadActiveReward(): void
+    {
+        $this->activeReward = \App\Models\Marketing\LoyaltyReward::where('business_id', $this->business->id)
+            ->where('is_active', true)
+            ->orderBy('required_visits', 'asc')
+            ->first();
+    }
+
+    private function ensureQueueIsJoinable(): bool
+    {
+        if ($this->business->queue_status === \App\Enums\BusinessQueueStatus::OPEN->value) {
+            return true;
+        }
+
+        if ($this->business->queue_status === \App\Enums\BusinessQueueStatus::PAUSED->value) {
+            $this->errorMessage = 'Sorry, the queue is currently paused: ' . ($this->business->pause_reason ?: 'On a short break.');
+        } else {
+            $this->errorMessage = 'Sorry, the queue is currently closed.';
+        }
+
+        return false;
+    }
+
+    private function sanitizePhone(string $phone): ?string
+    {
+        return trim($phone) ?: null;
     }
 
     public function render()

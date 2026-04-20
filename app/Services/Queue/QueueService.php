@@ -33,7 +33,7 @@ class QueueService
         }
 
         $business->update([
-            'queue_status' => 'open',
+            'queue_status' => \App\Enums\BusinessQueueStatus::OPEN->value,
             'pause_reason' => null
         ]);
     }
@@ -41,7 +41,7 @@ class QueueService
     public function pauseQueue(Business $business, $reason = null)
     {
         $business->update([
-            'queue_status' => 'paused',
+            'queue_status' => \App\Enums\BusinessQueueStatus::PAUSED->value,
             'pause_reason' => $reason
         ]);
     }
@@ -60,7 +60,7 @@ class QueueService
             ]);
 
         $business->update([
-            'queue_status' => 'closed',
+            'queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value,
             'pause_reason' => null,
             'current_number' => 0,
             'entries_today' => 0,
@@ -70,7 +70,7 @@ class QueueService
 
     public function join(Business $business, $waId)
     {
-        if ($business->queue_status !== 'open') {
+        if ($business->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
             throw new Exception("The queue is currently closed.");
         }
 
@@ -89,30 +89,26 @@ class QueueService
         }
 
         return DB::transaction(function () use ($business, $waId) {
-            $business->increment('current_number');
-            $business->increment('entries_today');
+            $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
+            
+            $lockedBusiness->increment('current_number');
+            $lockedBusiness->increment('entries_today');
 
-            $number = $business->current_number;
-            $code = $business->queue_prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
-
-            // Issue #7: Lock WAITING entries to prevent race condition on position
-            $position = QueueEntry::where('business_id', $business->id)
-                ->where('status', QueueStatus::WAITING->value)
-                ->lockForUpdate()
-                ->count() + 1;
+            $number = $lockedBusiness->current_number;
+            $code = $lockedBusiness->queue_prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
 
             $entry = QueueEntry::create([
-                'business_id' => $business->id,
+                'business_id' => $lockedBusiness->id,
                 'wa_id' => $waId,
                 'ticket_number' => $number,
                 'ticket_code' => $code,
                 'status' => QueueStatus::WAITING->value,
                 'source' => 'whatsapp',
                 'cancel_token' => Str::random(32),
-                'position' => $position
+                'position' => 0
             ]);
 
-            event(new \App\Events\TicketJoined($entry, $business));
+            event(new \App\Events\TicketJoined($entry, $lockedBusiness));
 
             return $entry;
         });
@@ -126,27 +122,23 @@ class QueueService
         }
 
         return DB::transaction(function () use ($business) {
-            $business->increment('current_number');
-            $business->increment('entries_today');
+            $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
+            
+            $lockedBusiness->increment('current_number');
+            $lockedBusiness->increment('entries_today');
 
-            $number = $business->current_number;
-            $code = $business->queue_prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
-
-            // Issue #7: Lock WAITING entries to prevent race condition on position
-            $position = QueueEntry::where('business_id', $business->id)
-                ->where('status', QueueStatus::WAITING->value)
-                ->lockForUpdate()
-                ->count() + 1;
+            $number = $lockedBusiness->current_number;
+            $code = $lockedBusiness->queue_prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
 
             return QueueEntry::create([
-                'business_id' => $business->id,
+                'business_id' => $lockedBusiness->id,
                 'wa_id' => null,
                 'ticket_number' => $number,
                 'ticket_code' => $code,
                 'status' => QueueStatus::WAITING->value,
                 'source' => 'anonymous',
                 'cancel_token' => Str::random(32),
-                'position' => $position
+                'position' => 0
             ]);
         });
     }
@@ -167,11 +159,10 @@ class QueueService
             $nextEntry->update([
                 'status' => QueueStatus::CALLED->value,
                 'counter_id' => $counterId,
+                'processed_by_user_id' => auth()->id(),
                 'called_at' => now(),
                 'position' => 0
             ]);
-
-            $this->recalculatePositions($business->id);
 
             event(new TicketStatusUpdated($nextEntry, $business));
 
@@ -195,39 +186,13 @@ class QueueService
         $entry->update([
             'status' => QueueStatus::COMPLETED->value,
             'completed_at' => now(),
+            'processed_by_user_id' => auth()->id(),
             'position' => 0
         ]);
 
         if ($entry->wa_id) {
-            $visitNumber = LoyaltyVisit::where('business_id', $entry->business_id)
-                ->where('wa_id', $entry->wa_id)
-                ->count() + 1;
-
-            LoyaltyVisit::create([
-                'business_id' => $entry->business_id,
-                'wa_id' => $entry->wa_id,
-                'queue_entry_id' => $entry->id,
-                'visit_number' => $visitNumber
-            ]);
-
-            // Check if any loyalty rewards were earned
-            $rewards = \App\Models\Marketing\LoyaltyReward::where('business_id', $entry->business_id)
-                ->where('is_active', true)
-                ->get();
-
-            foreach ($rewards as $reward) {
-                if ($visitNumber % $reward->required_visits === 0) {
-                    \App\Models\Marketing\EarnedReward::create([
-                        'business_id' => $entry->business_id,
-                        'wa_id' => $entry->wa_id,
-                        'loyalty_reward_id' => $reward->id,
-                        'status' => 'available'
-                    ]);
-                }
-            }
+            event(new \App\Events\TicketCompleted($entry));
         }
-
-        $this->recalculatePositions($entry->business_id);
 
         // Issue #13: Broadcast completed status to clients
         event(new TicketStatusUpdated($entry, $entry->business));
@@ -237,9 +202,10 @@ class QueueService
     {
         $entry->update([
             'status' => QueueStatus::SKIPPED->value,
+            'processed_by_user_id' => auth()->id(),
             'position' => 0
         ]);
-        $this->recalculatePositions($entry->business_id);
+        
         event(new TicketStatusUpdated($entry, $entry->business));
     }
 
@@ -247,40 +213,11 @@ class QueueService
     {
         $entry->update([
             'status' => QueueStatus::CANCELLED->value,
+            'processed_by_user_id' => auth()->id(),
             'position' => 0
         ]);
-        $this->recalculatePositions($entry->business_id);
+        
         event(new TicketStatusUpdated($entry, $entry->business));
-    }
-
-    /**
-     * Issue #8: Optimized position recalculation.
-     * Uses raw SQL on MySQL for single-query performance,
-     * falls back to batch update on SQLite (test environment).
-     */
-    public function recalculatePositions($businessId)
-    {
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement("
-                UPDATE queue_entries qe
-                JOIN (
-                    SELECT id, ROW_NUMBER() OVER (ORDER BY id ASC) as new_pos
-                    FROM queue_entries
-                    WHERE business_id = ? AND status = 'waiting'
-                ) ranked ON qe.id = ranked.id
-                SET qe.position = ranked.new_pos
-            ", [$businessId]);
-        } else {
-            // Portable fallback (SQLite) — single query to get IDs, then batch update
-            $ids = QueueEntry::where('business_id', $businessId)
-                ->where('status', QueueStatus::WAITING->value)
-                ->orderBy('id', 'asc')
-                ->pluck('id');
-
-            foreach ($ids as $index => $id) {
-                QueueEntry::where('id', $id)->update(['position' => $index + 1]);
-            }
-        }
     }
 
     public function getPositionInfo(QueueEntry $entry)
@@ -293,12 +230,30 @@ class QueueService
             ];
         }
 
-        $ahead = $entry->position - 1;
-        
+        $ahead = QueueEntry::where('business_id', $entry->business_id)
+            ->where('status', QueueStatus::WAITING->value)
+            ->where('id', '<', $entry->id)
+            ->count();
+
+        // Calculate dynamic wait time rolling average (last 10 completed)
+        $avgWaitSeconds = QueueEntry::where('business_id', $entry->business_id)
+            ->where('status', QueueStatus::COMPLETED->value)
+            ->whereNotNull('called_at')
+            ->whereNotNull('completed_at')
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->get()
+            ->avg(function ($completedEntry) {
+                return $completedEntry->completed_at->diffInSeconds($completedEntry->called_at);
+            });
+
+        // Fallback to 5 mins if no data
+        $avgWaitMins = $avgWaitSeconds ? ceil($avgWaitSeconds / 60) : 5;
+
         return [
-            'position' => $entry->position,
+            'position' => $ahead + 1,
             'ahead' => $ahead,
-            'estimated_wait_mins' => $ahead * 5
+            'estimated_wait_mins' => $ahead * $avgWaitMins
         ];
     }
 }

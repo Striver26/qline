@@ -45,7 +45,7 @@ return [
         'monthly' => [
             'price' => 300.00,
             'label' => 'Monthly',
-            'daily_limit' => 100,
+            'daily_limit' => 500,
             'counters' => false,
             'billing_cycle' => 'monthly',
         ],

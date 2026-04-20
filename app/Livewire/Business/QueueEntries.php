@@ -5,20 +5,21 @@ namespace App\Livewire\Business;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Queue\QueueEntry;
+use Illuminate\Database\Eloquent\Builder;
 
 class QueueEntries extends Component
 {
     use WithPagination;
 
-    public $search = '';
-    public $status = '';
+    public string $search = '';
+    public string $status = '';
 
-    public function updatingSearch()
+    public function updatingSearch(): void
     {
         $this->resetPage();
     }
     
-    public function updatingStatus()
+    public function updatingStatus(): void
     {
         $this->resetPage();
     }
@@ -29,25 +30,36 @@ class QueueEntries extends Component
         
         $query = QueueEntry::where('business_id', $businessId);
 
-        if ($this->search) {
-            $query->where(function($q) {
-                $q->where('ticket_code', 'like', '%' . $this->search . '%')
-                  ->orWhere('wa_id', 'like', '%' . $this->search . '%');
-
-                if (strtolower($this->search) === 'anonymous') {
-                    $q->orWhereNull('wa_id')
-                      ->orWhere('source', 'anonymous');
-                }
-            });
-        }
-
-        if ($this->status) {
-            $query->where('status', $this->status);
-        }
+        $this->applySearchFilters($query);
+        $this->applyStatusFilters($query);
 
         $entries = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return view('livewire.business.queue-entries', compact('entries'))
             ->layout('layouts.app');
+    }
+
+    private function applySearchFilters(Builder $query): void
+    {
+        if (empty($this->search)) {
+            return;
+        }
+
+        $query->where(function (Builder $q) {
+            $q->where('ticket_code', 'like', '%' . $this->search . '%')
+              ->orWhere('wa_id', 'like', '%' . $this->search . '%');
+
+            if (strtolower($this->search) === 'anonymous') {
+                $q->orWhereNull('wa_id')
+                  ->orWhere('source', 'anonymous');
+            }
+        });
+    }
+
+    private function applyStatusFilters(Builder $query): void
+    {
+        if (!empty($this->status)) {
+            $query->where('status', $this->status);
+        }
     }
 }

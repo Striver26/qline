@@ -69,15 +69,25 @@ class LoyaltyRewards extends Component
         ];
 
         if ($this->editingId) {
-            LoyaltyReward::where('business_id', auth()->user()->business_id)
-                ->where('id', $this->editingId)
-                ->update($data);
+            $this->updateExistingReward($data);
         } else {
-            LoyaltyReward::create($data);
+            $this->createNewReward($data);
         }
 
         $this->reset(['reward_value', 'required_visits', 'reward_type', 'editingId', 'showForm']);
         $this->dispatch('reward-saved');
+    }
+
+    private function updateExistingReward(array $data): void
+    {
+        LoyaltyReward::where('business_id', auth()->user()->business_id)
+            ->where('id', $this->editingId)
+            ->update($data);
+    }
+
+    private function createNewReward(array $data): void
+    {
+        LoyaltyReward::create($data);
     }
 
 
