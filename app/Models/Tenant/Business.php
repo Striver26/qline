@@ -30,12 +30,14 @@ class Business extends Model
         'entries_today',
         'notify_turns_before',
         'last_reset_at',
+        'timezone',
     ];
 
     protected function casts(): array
     {
         return [
             'last_reset_at' => 'datetime',
+            'business_hours' => 'array',
         ];
     }
 

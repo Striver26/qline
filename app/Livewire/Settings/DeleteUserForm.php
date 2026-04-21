@@ -22,7 +22,19 @@ class DeleteUserForm extends Component
             'password' => $this->currentPasswordRules(),
         ]);
 
-        tap(Auth::user(), $logout(...))->delete();
+        $user = Auth::user();
+
+        if ($user->role === \App\Enums\UserRole::SUPERADMIN && \App\Models\User::where('role', 'superadmin')->count() <= 1) {
+            $this->addError('password', 'You cannot delete the last superadmin account.');
+            return;
+        }
+
+        if ($user->role === \App\Enums\UserRole::BUSINESS_OWNER) {
+            $this->addError('password', 'Business owners cannot delete their account without transferring ownership first.');
+            return;
+        }
+
+        tap($user, $logout(...))->delete();
 
         $this->redirect('/', navigate: true);
     }

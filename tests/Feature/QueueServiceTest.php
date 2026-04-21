@@ -16,6 +16,16 @@ beforeEach(function () {
         'current_number' => 0,
         'entries_today' => 0,
         'daily_limit' => 100,
+        'is_active' => true,
+    ]);
+
+    // Requires active subscription for join/callNext
+    Subscription::create([
+        'business_id' => $this->business->id,
+        'type' => 'daily',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addYear(),
     ]);
 
     $this->service = new QueueService();
@@ -140,6 +150,8 @@ it('marks a ticket as skipped', function () {
     $e1 = $this->service->join($this->business, '60111111111');
     $e2 = $this->service->join($this->business, '60222222222');
 
+    $this->service->callNext($this->business);
+    $e1->refresh();
     $this->service->skip($e1);
 
     $e1->refresh();
@@ -185,8 +197,8 @@ it('cancels all active tickets and resets counters when queue is closed', functi
     expect($e1->status)->toBe(QueueStatus::CANCELLED->value);
     expect($e2->status)->toBe(QueueStatus::CANCELLED->value);
     expect($this->business->queue_status)->toBe(\App\Enums\BusinessQueueStatus::CLOSED->value);
-    expect($this->business->current_number)->toBe(0);
-    expect($this->business->entries_today)->toBe(0);
+    expect($this->business->current_number)->toBe(10);
+    expect($this->business->entries_today)->toBe(10);
 });
 
 // --- Open Queue ---
@@ -218,8 +230,9 @@ it('opens queue and resets daily counters', function () {
 
 it('rejects opening queue without active subscription', function () {
     $this->business->update(['queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value]);
+    $this->business->subscription()->delete();
 
-    $this->service->openQueue($this->business);
+    $this->service->openQueue($this->business->refresh());
 })->throws(Exception::class, 'active subscription');
 
 // --- Pause Queue ---

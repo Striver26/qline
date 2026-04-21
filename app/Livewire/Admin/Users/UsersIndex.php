@@ -32,8 +32,13 @@ class UsersIndex extends Component
     {
         $this->validate([
             'inviteEmail' => ['required', 'email', Rule::unique('users', 'email')],
-            'inviteRole' => 'required|string',
+            'inviteRole' => ['required', 'string', Rule::enum(\App\Enums\UserRole::class)],
         ]);
+
+        if ($this->inviteRole === \App\Enums\UserRole::SUPERADMIN->value && auth()->user()->role !== \App\Enums\UserRole::SUPERADMIN) {
+            session()->flash('error', 'Only superadmins can create other superadmins.');
+            return;
+        }
 
         $password = Str::random(10);
 
@@ -69,7 +74,22 @@ class UsersIndex extends Component
 
     public function updateUser()
     {
+        $this->validate([
+            'editRole' => ['required', 'string', Rule::enum(\App\Enums\UserRole::class)],
+        ]);
+
         $user = User::findOrFail($this->editingUserId);
+
+        if ($this->editRole === \App\Enums\UserRole::SUPERADMIN->value && auth()->user()->role !== \App\Enums\UserRole::SUPERADMIN) {
+            session()->flash('error', 'Only superadmins can assign the superadmin role.');
+            return;
+        }
+
+        if ($user->role === \App\Enums\UserRole::SUPERADMIN && $this->editRole !== \App\Enums\UserRole::SUPERADMIN->value && User::where('role', 'superadmin')->count() <= 1) {
+            session()->flash('error', 'Cannot change the role of the last superadmin account.');
+            return;
+        }
+
         $user->update(['role' => $this->editRole]);
         $this->dispatch('modal-close', name: 'edit-user');
         session()->flash('status', "User role smoothly updated.");
@@ -110,8 +130,10 @@ class UsersIndex extends Component
             ->when(
                 $this->search,
                 fn($q) =>
-                $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%')
+                $q->where(function ($query) {
+                    $query->where('name', 'like', '%' . $this->search . '%')
+                          ->orWhere('email', 'like', '%' . $this->search . '%');
+                })
             )
             ->when(
                 $this->filterRole,

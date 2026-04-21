@@ -68,12 +68,11 @@ class CleanupStaleQueues extends Command
     private function shouldCloseQueue(Business $business): bool
     {
         $timezone = $business->timezone ?? 'Asia/Kuala_Lumpur';
-        $day = strtolower(now()->timezone($timezone)->format('l'));
-        $currentTime = now()->timezone($timezone)->format('H:i');
+        $now = now()->timezone($timezone);
+        $day = strtolower($now->format('l'));
+        $currentTime = $now->format('H:i');
 
-        $hours = is_string($business->business_hours)
-            ? json_decode($business->business_hours, true)
-            : $business->business_hours;
+        $hours = $business->business_hours;
 
         if (!$hours || !isset($hours[$day])) {
             return false; // Leave as is if no explicit hours are provided
@@ -82,6 +81,18 @@ class CleanupStaleQueues extends Command
         $openTime = $hours[$day][0] ?? '00:00';
         $closeTime = $hours[$day][1] ?? '23:59';
 
-        return $currentTime < $openTime || $currentTime > $closeTime;
+        // Same time means open 24h
+        if ($openTime === $closeTime) {
+            return false;
+        }
+
+        // Case 1: Normal shift (e.g. 08:00 - 18:00)
+        if ($openTime < $closeTime) {
+            return $currentTime < $openTime || $currentTime > $closeTime;
+        }
+
+        // Case 2: Overnight shift (e.g. 22:00 - 04:00)
+        // Correct logic: Closed only if currentTime is between closeTime (04:00) and openTime (22:00)
+        return $currentTime > $closeTime && $currentTime < $openTime;
     }
 }

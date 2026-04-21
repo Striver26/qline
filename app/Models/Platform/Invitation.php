@@ -8,6 +8,7 @@ class Invitation extends Model
 {
     protected $fillable = [
         'business_id',
+        'invited_by',
         'email',
         'role',
         'token',
@@ -27,5 +28,10 @@ class Invitation extends Model
     public function business()
     {
         return $this->belongsTo(\App\Models\Tenant\Business::class);
+    }
+
+    public function inviter()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'invited_by');
     }
 }

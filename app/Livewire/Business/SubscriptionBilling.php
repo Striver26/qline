@@ -14,6 +14,11 @@ class SubscriptionBilling extends Component
 {
     public function subscribe(BillPlzService $billPlz, string $tier = 'daily')
     {
+        if (!auth()->user()->isOwner()) {
+            session()->flash('error', 'Only business owners can modify subscription plans.');
+            return;
+        }
+
         $business = auth()->user()->business;
 
         $tierConfig = config("qline.tiers.{$tier}");

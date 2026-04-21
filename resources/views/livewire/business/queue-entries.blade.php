@@ -27,6 +27,7 @@
                 <option value="completed">Completed</option>
                 <option value="skipped">Skipped</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="no_show">No Show</option>
             </flux:select>
         </div>
     </div>
@@ -62,6 +63,7 @@
                                     'completed' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
                                     'skipped' => 'border-orange-200 bg-orange-50 text-orange-700',
                                     'cancelled' => 'border-rose-200 bg-rose-50 text-rose-700',
+                                    'no_show' => 'border-slate-200 bg-slate-50 text-slate-600',
                                 ];
                                 $colorClass = $statusColors[$entry->status] ?? 'border-slate-200 bg-slate-100 text-slate-700';
                             @endphp

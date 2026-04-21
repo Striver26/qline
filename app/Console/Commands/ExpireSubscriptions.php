@@ -11,11 +11,12 @@ class ExpireSubscriptions extends Command
 
     protected $description = 'Expire subscriptions that have passed their expiration date';
 
-    public function handle(): int
+    public function handle(\App\Services\Queue\QueueService $queueService): int
     {
         $expired = Subscription::where('status', 'active')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', now())
+            ->with('business')
             ->get();
 
         if ($expired->isEmpty()) {
@@ -23,7 +24,11 @@ class ExpireSubscriptions extends Command
         } else {
             foreach ($expired as $sub) {
                 $sub->update(['status' => 'expired']);
-                $this->info("Expired subscription for Business ID: {$sub->business_id}");
+                
+                // Force close the queue to cancel pending tickets
+                $queueService->closeQueue($sub->business);
+                
+                $this->info("Expired subscription and closed queue for: {$sub->business->name}");
             }
             $this->info("Total expired: {$expired->count()} subscription(s).");
         }

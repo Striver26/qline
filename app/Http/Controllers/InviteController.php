@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules;
 
 class InviteController extends Controller
@@ -21,14 +22,20 @@ class InviteController extends Controller
 
     public function process(Request $request, $token)
     {
-        $invitation = $this->getValidInvitation($token);
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $this->createUserSession($invitation, $validated);
+        DB::transaction(function () use ($token, $validated) {
+            $invitation = Invitation::where('token', $token)->lockForUpdate()->firstOrFail();
+
+            if ($invitation->expires_at->isPast() || $invitation->accepted_at !== null) {
+                abort(403, 'This invitation link is invalid or has expired.');
+            }
+
+            $this->createUserSession($invitation, $validated);
+        });
 
         return redirect()->route('dashboard');
     }
@@ -52,7 +59,7 @@ class InviteController extends Controller
      */
     private function createUserSession(Invitation $invitation, array $validatedData): void
     {
-        $user = User::create([
+        $user = User::forceCreate([
             'name' => $validatedData['name'],
             'email' => $invitation->email,
             'password' => Hash::make($validatedData['password']),

@@ -18,7 +18,8 @@ class BusinessSettingsForm extends Form
     public $city = '';
     public $state = '';
     public $postcode = '';
-    public $business_hours = '';
+    public $timezone = 'Asia/Kuala_Lumpur';
+    public $business_hours = [];
 
     public function loadFromBusiness(?Business $business)
     {
@@ -31,11 +32,23 @@ class BusinessSettingsForm extends Form
             $this->city = $business->city;
             $this->state = $business->state;
             $this->postcode = $business->postcode;
-            $this->business_hours = $business->business_hours;
+            $this->timezone = $business->timezone ?? 'Asia/Kuala_Lumpur';
+            $this->business_hours = $business->business_hours ?? $this->defaultHours();
         } else {
             $this->join_code = strtoupper(Str::random(6));
             $this->queue_prefix = 'A';
+            $this->business_hours = $this->defaultHours();
         }
+    }
+
+    private function defaultHours()
+    {
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $hours = [];
+        foreach ($days as $day) {
+            $hours[$day] = ['09:00', '18:00'];
+        }
+        return $hours;
     }
 
     public function rules(): array
@@ -51,7 +64,8 @@ class BusinessSettingsForm extends Form
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'postcode' => 'nullable|string|max:10',
-            'business_hours' => 'nullable|string',
+            'timezone' => 'required|string|timezone',
+            'business_hours' => 'nullable|array',
         ];
     }
 }

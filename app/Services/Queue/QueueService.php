@@ -48,49 +48,55 @@ class QueueService
 
     public function closeQueue(Business $business)
     {
-        QueueEntry::where('business_id', $business->id)
+        $activeEntries = QueueEntry::where('business_id', $business->id)
             ->whereIn('status', [
                 QueueStatus::WAITING->value,
                 QueueStatus::CALLED->value,
                 QueueStatus::SERVING->value
             ])
-            ->update([
+            ->get();
+
+        foreach ($activeEntries as $entry) {
+            $entry->update([
                 'status' => QueueStatus::CANCELLED->value,
                 'position' => 0
             ]);
+            
+            event(new TicketStatusUpdated($entry, $business));
+        }
 
         $business->update([
             'queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value,
             'pause_reason' => null,
-            'current_number' => 0,
-            'entries_today' => 0,
-            'last_reset_at' => now(),
         ]);
     }
 
     public function join(Business $business, $waId)
     {
-        if ($business->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
-            throw new Exception("The queue is currently closed.");
-        }
+        $waId = $this->normalizePhone($waId);
 
-        // Issue #6: Enforce daily queue limit (0 = unlimited)
-        if ($business->daily_limit > 0 && $business->entries_today >= $business->daily_limit) {
-            throw new Exception("Queue limit reached for today ({$business->daily_limit} tickets).");
-        }
-
-        $todayCount = QueueEntry::where('business_id', $business->id)
-            ->where('wa_id', $waId)
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
-
-        if ($todayCount >= 3) {
-            throw new Exception("You have reached the maximum queue limit of 3 tickets per day.");
-        }
+        $this->ensureActiveSubscription($business);
 
         return DB::transaction(function () use ($business, $waId) {
             $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
             
+            if ($lockedBusiness->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
+                throw new Exception("The queue is currently closed.");
+            }
+
+            if ($lockedBusiness->daily_limit > 0 && $lockedBusiness->entries_today >= $lockedBusiness->daily_limit) {
+                throw new Exception("Queue limit reached for today ({$lockedBusiness->daily_limit} tickets).");
+            }
+
+            $todayCount = QueueEntry::where('business_id', $lockedBusiness->id)
+                ->where('wa_id', $waId)
+                ->whereDate('created_at', now()->toDateString())
+                ->count();
+
+            if ($todayCount >= 3) {
+                throw new Exception("You have reached the maximum queue limit of 3 tickets per day.");
+            }
+
             $lockedBusiness->increment('current_number');
             $lockedBusiness->increment('entries_today');
 
@@ -116,14 +122,19 @@ class QueueService
 
     public function addManual(Business $business)
     {
-        // Issue #6: Enforce daily queue limit (0 = unlimited)
-        if ($business->daily_limit > 0 && $business->entries_today >= $business->daily_limit) {
-            throw new Exception("Queue limit reached for today ({$business->daily_limit} tickets).");
-        }
+        $this->ensureActiveSubscription($business);
 
         return DB::transaction(function () use ($business) {
             $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
             
+            if ($lockedBusiness->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
+                throw new Exception("The queue is currently closed.");
+            }
+
+            if ($lockedBusiness->daily_limit > 0 && $lockedBusiness->entries_today >= $lockedBusiness->daily_limit) {
+                throw new Exception("Queue limit reached for today ({$lockedBusiness->daily_limit} tickets).");
+            }
+
             $lockedBusiness->increment('current_number');
             $lockedBusiness->increment('entries_today');
 
@@ -145,8 +156,12 @@ class QueueService
 
     public function callNext(Business $business, $counterId = null)
     {
+        $this->ensureActiveSubscription($business);
+
         return DB::transaction(function () use ($business, $counterId) {
-            $nextEntry = QueueEntry::where('business_id', $business->id)
+            $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
+
+            $nextEntry = QueueEntry::where('business_id', $lockedBusiness->id)
                 ->where('status', QueueStatus::WAITING->value)
                 ->orderBy('id', 'asc')
                 ->lockForUpdate()
@@ -172,6 +187,10 @@ class QueueService
 
     public function markServing(QueueEntry $entry)
     {
+        if ($entry->status !== QueueStatus::CALLED->value) {
+            throw new Exception("Only called tickets can be marked as serving.");
+        }
+
         $entry->update([
             'status' => QueueStatus::SERVING->value,
             'served_at' => now()
@@ -183,6 +202,10 @@ class QueueService
 
     public function markDone(QueueEntry $entry)
     {
+        if (!in_array($entry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value])) {
+            throw new Exception("Only active tickets can be completed.");
+        }
+
         $entry->update([
             'status' => QueueStatus::COMPLETED->value,
             'completed_at' => now(),
@@ -200,6 +223,10 @@ class QueueService
 
     public function skip(QueueEntry $entry)
     {
+        if (!in_array($entry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value])) {
+            throw new Exception("Only active tickets can be skipped.");
+        }
+
         $entry->update([
             'status' => QueueStatus::SKIPPED->value,
             'processed_by_user_id' => auth()->id(),
@@ -211,6 +238,10 @@ class QueueService
 
     public function cancel(QueueEntry $entry)
     {
+        if (!in_array($entry->status, [QueueStatus::WAITING->value, QueueStatus::CALLED->value])) {
+            throw new Exception("Only waiting or called tickets can be cancelled.");
+        }
+
         $entry->update([
             'status' => QueueStatus::CANCELLED->value,
             'processed_by_user_id' => auth()->id(),
@@ -255,5 +286,27 @@ class QueueService
             'ahead' => $ahead,
             'estimated_wait_mins' => $ahead * $avgWaitMins
         ];
+    }
+
+    private function ensureActiveSubscription(Business $business): void
+    {
+        $sub = $business->subscription;
+        if (!$sub || $sub->status !== 'active' || ($sub->expires_at && $sub->expires_at->isPast())) {
+            // Force closure on detection of invalid subscription
+            $this->closeQueue($business);
+            
+            throw new Exception("The business has no active subscription.");
+        }
+    }
+
+    private function normalizePhone($phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone);
+        
+        if (str_starts_with($digits, '0')) {
+            $digits = '60' . substr($digits, 1);
+        }
+        
+        return $digits;
     }
 }

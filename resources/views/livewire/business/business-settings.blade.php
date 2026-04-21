@@ -62,10 +62,34 @@
             </div>
 
             <div class="soft-card">
-                <p class="metric-label">Operating Hours</p>
-                <div class="mt-5 space-y-5">
-                    <flux:textarea wire:model="form.business_hours" :label="__('Business Hours')" rows="3" placeholder="Monday - Friday: 9am - 5pm&#10;Saturday: 10am - 2pm&#10;Sunday: Closed" />
-                    <flux:description>{{ __('Let your customers know when they can physically visit.') }}</flux:description>
+                <p class="metric-label">Operating Hours & Timezone</p>
+                <div class="mt-5 space-y-6">
+                    <flux:field>
+                        <flux:label>{{ __('Business Timezone') }}</flux:label>
+                        <flux:select wire:model="form.timezone" filterable>
+                            @foreach(\DateTimeZone::listIdentifiers() as $tz)
+                                <flux:select.option :value="$tz">{{ $tz }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:description>{{ __('All automated open/close logic will follow this timezone.') }}</flux:description>
+                    </flux:field>
+
+                    <div class="space-y-4">
+                        <p class="text-sm font-medium text-slate-900 dark:text-white">Weekly Schedule</p>
+                        <div class="grid gap-4 sm:max-w-xl">
+                            @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
+                                <div class="flex items-center gap-4">
+                                    <div class="w-24 text-sm font-semibold capitalize text-slate-600 dark:text-slate-400">{{ __($day) }}</div>
+                                    <div class="flex flex-1 items-center gap-3">
+                                        <flux:input type="time" wire:model="form.business_hours.{{ $day }}.0" class="flex-1" />
+                                        <span class="text-slate-400">to</span>
+                                        <flux:input type="time" wire:model="form.business_hours.{{ $day }}.1" class="flex-1" />
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <flux:description>{{ __('Automated cleanup jobs will use these windows to close your queue if left open.') }}</flux:description>
+                    </div>
                 </div>
             </div>
 

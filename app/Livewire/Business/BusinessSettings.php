@@ -46,7 +46,9 @@ class BusinessSettings extends Component
             'state' => $this->form->state,
             'postcode' => $this->form->postcode,
             'business_hours' => $this->form->business_hours,
+            'timezone' => $this->form->timezone,
             'queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value,
+            'is_active' => true,
         ]);
 
         $user->update([
@@ -58,7 +60,8 @@ class BusinessSettings extends Component
     private function updateBusinessAccount(Business $business): void
     {
         $business->update([
-            'slug' => Str::slug($this->form->name),
+            'name' => $this->form->name,
+            'slug' => $business->slug ?: Str::slug($this->form->name),
             'join_code' => strtoupper($this->form->join_code),
             'queue_prefix' => strtoupper($this->form->queue_prefix ?? 'A'),
             'address' => $this->form->address,
@@ -67,6 +70,7 @@ class BusinessSettings extends Component
             'state' => $this->form->state,
             'postcode' => $this->form->postcode,
             'business_hours' => $this->form->business_hours,
+            'timezone' => $this->form->timezone,
         ]);
     }
 

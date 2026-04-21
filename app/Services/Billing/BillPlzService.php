@@ -28,6 +28,9 @@ class BillPlzService
     public function createBill(Business $business, float $amount, string $description, string $callbackUrl, string $redirectUrl)
     {
         if (!$this->secretKey) {
+            if (!app()->environment('local', 'testing')) {
+                throw new \Exception('BillPlz secret key is not configured in this environment.');
+            }
             Log::info("Mock BillPlz Create Bill for {$business->name} - RM {$amount}");
             return [
                 'id' => 'mock_bill_' . uniqid(),
@@ -58,7 +61,13 @@ class BillPlzService
 
     public function verifySignature(array $data): bool
     {
-        if (!$this->xSignatureKey) return true; // Accept mocks
+        if (!$this->xSignatureKey) {
+            if (!app()->environment('local', 'testing')) {
+                Log::error('BillPlz x_signature key missing in non-local environment.');
+                return false;
+            }
+            return true;
+        }
 
         $sourceString = "";
         
