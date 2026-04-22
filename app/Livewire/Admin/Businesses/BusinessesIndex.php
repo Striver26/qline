@@ -60,6 +60,13 @@ class BusinessesIndex extends Component
             'join_code'=> $biz->join_code,
         ]);
 
+        // Cleanup associated users (Staff) to prevent orphans
+        \App\Models\User::where('business_id', $biz->id)->update([
+            'is_active' => false,
+            'profile_completed' => false,
+            'business_id' => null
+        ]);
+
         $biz->delete();
         $this->dispatch('modal-close', name: 'delete-business');
         session()->flash('status', "Tenant profoundly deleted.");

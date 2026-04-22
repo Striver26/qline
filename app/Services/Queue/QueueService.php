@@ -189,6 +189,25 @@ class QueueService
 
             event(new TicketStatusUpdated($nextEntry, $business));
 
+            // Issue #29: Pre-turn notification
+            $notifyTurnsBefore = $lockedBusiness->notify_turns_before ?? 3;
+            if ($notifyTurnsBefore > 0) {
+                $upcomingEntry = QueueEntry::where('business_id', $lockedBusiness->id)
+                    ->where('status', QueueStatus::WAITING->value)
+                    ->orderBy('id', 'asc')
+                    ->offset($notifyTurnsBefore - 1)
+                    ->first();
+
+                if ($upcomingEntry && $upcomingEntry->wa_id) {
+                    app(\App\Services\WhatsApp\WhatsAppService::class)->sendText(
+                        $upcomingEntry->wa_id,
+                        "Your turn at {$lockedBusiness->name} is coming soon! You are now number {$notifyTurnsBefore} in line. Please get ready.",
+                        $lockedBusiness->id,
+                        $upcomingEntry->id
+                    );
+                }
+            }
+
             return $nextEntry;
         });
     }
@@ -257,6 +276,35 @@ class QueueService
         ]);
         
         event(new TicketStatusUpdated($entry, $entry->business));
+    }
+
+    public function rejoin(QueueEntry $entry)
+    {
+        if (!in_array($entry->status, [QueueStatus::SKIPPED->value, QueueStatus::CANCELLED->value])) {
+            throw new Exception("Only skipped or cancelled tickets can be rejoined.");
+        }
+
+        return DB::transaction(function () use ($entry) {
+            $lockedBusiness = Business::where('id', $entry->business_id)->lockForUpdate()->first();
+            
+            if ($lockedBusiness->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
+                throw new Exception("The queue is currently closed.");
+            }
+
+            $entry->update([
+                'status' => QueueStatus::WAITING->value,
+                'position' => 0,
+                'counter_id' => null,
+                'processed_by_user_id' => null,
+                'called_at' => null,
+                'served_at' => null,
+                'completed_at' => null,
+            ]);
+
+            event(new TicketStatusUpdated($entry, $lockedBusiness));
+
+            return $entry;
+        });
     }
 
     public function getPositionInfo(QueueEntry $entry)

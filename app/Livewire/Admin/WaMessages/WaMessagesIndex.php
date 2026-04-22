@@ -7,7 +7,20 @@ use App\Models\Marketing\WhatsappMessage;
 class WaMessagesIndex extends Component
 {
     use WithPagination;
-    
+
+    public string $search = '';
+    public string $filterStatus = '';
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
     public function pruneLogs()
     {
         $count = WhatsappMessage::where('created_at', '<', now()->subDays(30))->delete();
@@ -17,7 +30,21 @@ class WaMessagesIndex extends Component
 
     public function render()
     {
-        $messages = WhatsappMessage::with('business')->latest()->paginate(20);
+        $messages = WhatsappMessage::with('business')
+            ->when($this->search, function ($q) {
+                $q->where(function ($inner) {
+                    $inner->where('wa_id', 'like', '%' . $this->search . '%')
+                          ->orWhere('body', 'like', '%' . $this->search . '%')
+                          ->orWhere('message_id', 'like', '%' . $this->search . '%')
+                          ->orWhereHas('business', function ($bq) {
+                              $bq->where('name', 'like', '%' . $this->search . '%');
+                          });
+                });
+            })
+            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
+            ->latest()
+            ->paginate(20);
+
         return view('livewire.admin.wa-messages.wa-messages-index', ['messages' => $messages])->layout('layouts.app');
     }
 }

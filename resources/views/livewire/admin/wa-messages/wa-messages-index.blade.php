@@ -19,6 +19,16 @@
     @endif
 
     <div class="glass-card !p-0 overflow-hidden">
+        <div class="flex flex-wrap items-center gap-3 border-b border-slate-200/70 dark:border-white/10 px-6 py-4">
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search phone, content, business..." icon="magnifying-glass" class="max-w-sm" />
+            <flux:select wire:model.live="filterStatus" class="max-w-[160px]">
+                <flux:select.option value="">All Status</flux:select.option>
+                <flux:select.option value="sent">Sent</flux:select.option>
+                <flux:select.option value="delivered">Delivered</flux:select.option>
+                <flux:select.option value="read">Read</flux:select.option>
+                <flux:select.option value="failed">Failed</flux:select.option>
+            </flux:select>
+        </div>
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>Business</flux:table.column>

@@ -40,6 +40,7 @@
                 <flux:table.column class="px-6 py-4">Status</flux:table.column>
                 <flux:table.column class="px-6 py-4">Source</flux:table.column>
                 <flux:table.column class="px-6 py-4 text-right">Date & Time</flux:table.column>
+                <flux:table.column class="px-6 py-4 text-right">Actions</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -81,6 +82,14 @@
                         <flux:table.cell class="px-6 py-4 text-right">
                             <span
                                 class="text-sm font-medium text-slate-600 dark:text-slate-300">{{ $entry->created_at->format('M d, Y h:i A') }}</span>
+                        </flux:table.cell>
+
+                        <flux:table.cell class="px-6 py-4 text-right">
+                            @if(in_array($entry->status, ['skipped', 'cancelled']))
+                                <flux:button wire:click="rejoin({{ $entry->id }})" wire:confirm="Are you sure you want to rejoin this ticket?" size="sm" variant="ghost" icon="arrow-path">
+                                    Recall
+                                </flux:button>
+                            @endif
                         </flux:table.cell>
                     </flux:table.row>
                 @empty

@@ -24,6 +24,21 @@ class QueueEntries extends Component
         $this->resetPage();
     }
 
+    public function rejoin($id)
+    {
+        $entry = QueueEntry::findOrFail($id);
+        
+        // Security: Ensure the entry belongs to the user's business
+        $businessId = auth()->user()->getActiveBusiness()?->id;
+        if ($entry->business_id !== $businessId) {
+            abort(403);
+        }
+
+        app(\App\Services\Queue\QueueService::class)->rejoin($entry);
+        
+        session()->flash('status', "Ticket {$entry->ticket_code} has been rejoined to the queue.");
+    }
+
     public function render()
     {
         $businessId = auth()->user()->getActiveBusiness()?->id;

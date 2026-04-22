@@ -23,7 +23,7 @@ class WhatsAppService
     public function sendText(string $to, string $text, ?int $businessId = null, ?int $queueEntryId = null): WhatsappMessage
     {
         // If dummy local env, just mock success
-        if ($this->token === 'dummy_token' || env('APP_ENV') === 'local') {
+        if ($this->token === 'dummy_token' || app()->environment('local')) {
             Log::info("Mock WhatsApp to {$to}: {$text}");
             return WhatsappMessage::create([
                 'business_id' => $businessId,
