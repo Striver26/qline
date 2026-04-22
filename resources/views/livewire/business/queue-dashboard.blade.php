@@ -82,9 +82,31 @@
             </div>
         </div>
 
+        @if($business->subscription?->type === \App\Enums\SubTier::ADVANCED && $this->activeCounters->isNotEmpty())
+            <div class="glass-card flex h-full flex-col justify-between !bg-white/50 dark:!bg-white/5">
+                <div>
+                    <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-400">Operating From</p>
+                    <div class="mt-4 space-y-2">
+                        @foreach($this->activeCounters as $counter)
+                            <button 
+                                wire:click="$set('selectedCounterId', {{ $counter->id }})"
+                                class="flex w-full items-center justify-between rounded-xl border px-4 py-3 transition-all {{ $selectedCounterId == $counter->id ? 'border-brand-200 bg-brand-50 text-brand-700 shadow-sm' : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/5 dark:bg-white/5' }}"
+                            >
+                                <span class="text-sm font-bold">{{ $counter->name }}</span>
+                                @if($selectedCounterId == $counter->id)
+                                    <flux:icon.check class="h-4 w-4" />
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="mt-4 text-[10px] text-slate-400">Pick your station before calling.</p>
+            </div>
+        @endif
+
         <flux:button
             wire:click="callNext"
-            :disabled="$business->queue_status !== 'open'"
+            :disabled="$business->queue_status !== 'open' || ($business->subscription?->type === \App\Enums\SubTier::ADVANCED && !$selectedCounterId)"
             class="mesh-accent relative flex h-full min-h-[11rem] flex-col items-start justify-between rounded-[1.8rem] p-6 text-left text-white shadow-[0_34px_90px_-42px_rgba(15,159,124,0.7)] transition duration-300 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
             <div>

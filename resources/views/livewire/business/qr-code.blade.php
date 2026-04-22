@@ -1,82 +1,226 @@
-<div class="space-y-6">
-    <div class="page-header">
-        <div>
-            <span class="page-kicker">Customer Entry Point</span>
-            <h1 class="page-title mt-4">QR Code Standee</h1>
-            <p class="page-description mt-3">
-                Print this standee and place it where customers arrive so they can join the queue without asking staff what to do.
+<div id="print-area" class="justify-center">
+
+    <div class="bg-white rounded-[2rem] overflow-hidden border border-brand-200">
+
+        {{-- HEADER --}}
+        <div class="mesh-accent text-center py-4 px-6 border border-brand-200">
+            <p class="text-xs text-slate-400 tracking-wide text-white">
+                Join the line at
+            </p>
+
+            <h2 class="mt-2 text-3xl uppercase font-black font-bold leading-tight">
+                {{ $business->name }}
+            </h2>
+
+            @if ($business->address)
+                <p class="mt-2 text-sm text-slate-500 text-white">
+                    {{ $business->address }}
+                </p>
+            @endif
+
+            @if ($business->postcode && $business->city)
+                <p class="text-sm text-slate-500 text-white">
+                    {{ $business->postcode }}, {{ $business->city }}
+                </p>
+            @endif
+        </div>
+
+        {{-- QR SECTION --}}
+        <div class="text-center px-6 py-6 items-center">
+
+            <p class="text-xs font-bold text-brand-600 uppercase tracking-wide mb-4">
+                Skip waiting in line • Get your turn instantly
+            </p>
+
+            <div class="qr-frame">
+                <div class="qr-corner tl"></div>
+                <div class="qr-corner tr"></div>
+                <div class="qr-corner bl"></div>
+                <div class="qr-corner br"></div>
+
+                <div class="qr-inner">
+                    {!! $qrCode !!}
+                </div>
+            </div>
+
+        </div>
+
+        {{-- DIVIDER --}}
+        <div class="h-px bg-gradient-to-r from-transparent via-brand-200 to-transparent mx-6"></div>
+
+        {{-- INSTRUCTIONS --}}
+        <div class="px-6 py-6">
+
+            <p class="text-[10px] uppercase tracking-[0.3em] text-brand-600 font-bold mb-4">
+                How it works
+            </p>
+
+            <div class="space-y-4">
+
+                <div class="flex items-start gap-3">
+                    <div
+                        class="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold">
+                        1</div>
+                    <p class="text-sm text-slate-700">
+                        Scan the QR code with your phone
+                    </p>
+                </div>
+
+                <div class="flex items-start gap-3">
+                    <div
+                        class="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold">
+                        2</div>
+                    <p class="text-sm text-slate-700">
+                        Send <span class="font-bold text-brand-600">JOIN {{ $joinCode }}</span> via WhatsApp
+                    </p>
+                </div>
+
+                <div class="flex items-start gap-3">
+                    <div
+                        class="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold">
+                        3</div>
+                    <p class="text-sm text-slate-700">
+                        Get notified when it's your turn
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        {{-- FOOTER --}}
+        <div class="mesh-accent border-t border-slate-500 px-6 py-4 flex justify-between items-center">
+            <p class="text-sm text-white">
+                Code: <span class="font-mono font-bold text-white">{{ $joinCode }}</span>
+            </p>
+
+            <p class="text-sm font-semibold text-white">
+                www.qline.my
             </p>
         </div>
 
-        <flux:button onclick="window.print()" variant="primary" class="mesh-accent rounded-full px-5 py-2.5 font-semibold text-white">
-            <flux:icon.printer class="mr-2 h-4 w-4" />
-            Print Standee
-        </flux:button>
-    </div>
-
-    <div class="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <div class="glass-card">
-            <span class="page-kicker">How it works</span>
-            <div class="mt-6 space-y-4">
-                <div class="soft-card">
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white">1. Customers scan the QR code.</p>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">It opens the queue page directly on their phone.</p>
-                </div>
-                <div class="soft-card">
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white">2. They join in seconds.</p>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">They can use WhatsApp for updates or join as an Anonymous customer.</p>
-                </div>
-                <div class="soft-card">
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white">3. They track their turn live.</p>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Less crowding at the counter, less confusion for your team.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass-card flex justify-center" id="printable-area">
-            <div class="w-full max-w-md overflow-hidden rounded-[2rem] border border-brand-200 bg-white shadow-[0_34px_90px_-44px_rgba(15,23,42,0.35)]">
-                <div class="mesh-accent px-8 py-10 text-center text-white">
-                    <p class="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-white/70">Join the line</p>
-                    <h2 class="mt-4 text-4xl font-bold tracking-[-0.06em]">Queue Here</h2>
-                    <p class="mt-3 text-sm text-white/80">Scan to join instantly and wait with live updates.</p>
-                </div>
-
-                <div class="px-8 py-10 text-center">
-                    <div class="mx-auto inline-flex h-64 w-64 items-center justify-center rounded-[1.6rem] border border-slate-100 bg-white p-5 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.24)] [&>svg]:h-full [&>svg]:w-full">
-                        {!! $qrCode !!}
-                    </div>
-
-                    <p class="mt-8 text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-slate-400">Or message this keyword</p>
-                    <p class="mt-3 text-4xl font-bold tracking-[0.14em] text-brand-700">JOIN {{ $joinCode }}</p>
-
-                    <div class="mt-8 border-t border-slate-100 pt-6">
-                        <x-app-logo class="mx-auto" />
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
+{{-- PRINT --}}
 <style>
-@media print {
-    body * {
-        visibility: hidden;
+    .qr-frame {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1.8px solid rgba(20, 184, 166, 0.25);
+        position: relative;
     }
 
-    #printable-area,
-    #printable-area * {
-        visibility: visible;
-    }
-
-    #printable-area {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
+    /* 🔥 THIS FIXES EVERYTHING */
+    .qr-inner {
         width: 100%;
-        max-width: 520px;
-        box-shadow: none;
+        height: 100%;
+        align-items: center;
+        border-radius: 5px;
     }
-}
+
+    .qr-inner svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .qr-corner {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border-color: #14B8A6;
+        border-style: solid;
+    }
+
+    .qr-corner.tl {
+        top: 32px;
+        left: 32px;
+        border-width: 3px 0 0 3px;
+        border-radius: 3px 0 0 0;
+    }
+
+    .qr-corner.tr {
+        top: 32px;
+        right: 32px;
+        border-width: 3px 3px 0 0;
+        border-radius: 0 3px 0 0;
+    }
+
+    .qr-corner.bl {
+        bottom: 32px;
+        left: 32px;
+        border-width: 0 0 3px 3px;
+        border-radius: 0 0 0 3px;
+    }
+
+    .qr-corner.br {
+        bottom: 32px;
+        right: 32px;
+        border-width: 0 3px 3px 0;
+        border-radius: 0 0 3px 0;
+    }
+
+    @media print {
+
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: white !important;
+        }
+
+        .mesh-accent {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* 🔥 ONLY PRINT THIS */
+        body * {
+            visibility: hidden;
+        }
+
+        #print-area,
+        #print-area * {
+            visibility: visible;
+        }
+
+        /* 🔥 FORCE EXACT A4 FIT */
+        #print-area {
+            position: fixed;
+            top: 0;
+            left: 0;
+
+            width: 210mm;
+            height: 297mm;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 🔥 CONTROL YOUR CARD SIZE */
+        #print-area>div {
+            width: 180mm;
+            /* safe margin */
+            max-height: 280mm;
+        }
+
+        /* 🔥 SCALE QR FOR PRINT */
+        .qr-inner {
+            width: 130mm !important;
+            height: 130mm !important;
+        }
+
+        /* 🔥 PREVENT PAGE BREAK */
+        * {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    }
 </style>

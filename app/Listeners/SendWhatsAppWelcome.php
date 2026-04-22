@@ -21,13 +21,18 @@ class SendWhatsAppWelcome implements ShouldQueue
             return;
         }
 
-        $trackerUrl = url("/q/{$event->business->slug}/status/{$event->entry->id}");
+        // Use the correct public route with cancel_token (not the raw entry ID)
+        $trackerUrl = route('public.status', [
+            'slug'  => $event->business->slug,
+            'token' => $event->entry->cancel_token,
+        ]);
+
         $responseMsg = "Hi! Welcome to {$event->business->name}.\n\nYour ticket is *{$event->entry->ticket_code}*.\nTrack your turn live here: {$trackerUrl}";
-        
+
         $this->waService->sendText(
-            $event->entry->wa_id, 
-            $responseMsg, 
-            $event->business->id, 
+            $event->entry->wa_id,
+            $responseMsg,
+            $event->business->id,
             $event->entry->id
         );
     }

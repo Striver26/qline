@@ -44,6 +44,9 @@ class AdminDumpDataSeeder extends Seeder
                 'created_at' => $owner->created_at,
             ]);
 
+            // Link owner back to business
+            $owner->update(['business_id' => $business->id]);
+
             // Create Subscription
             Subscription::create([
                 'business_id' => $business->id,

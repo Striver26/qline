@@ -26,7 +26,7 @@ class QueueEntries extends Component
 
     public function render()
     {
-        $businessId = auth()->user()->business_id;
+        $businessId = auth()->user()->getActiveBusiness()?->id;
         
         $query = QueueEntry::where('business_id', $businessId);
 

@@ -90,36 +90,32 @@ class BillPlzWebhookController extends Controller
             return response('Missing bill ID', 400);
         }
 
-        try {
-            return \Illuminate\Support\Facades\DB::transaction(function () use ($billId, $isPaid, $subscriptionService, $data) {
-                $payment = Payment::where('reference', $billId)->lockForUpdate()->first();
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($billId, $isPaid, $subscriptionService, $data) {
+            $payment = Payment::where('reference', $billId)->lockForUpdate()->first();
 
-                if (!$payment) {
-                    Log::warning("BillPlz callback: no payment found for bill ID {$billId}");
-                    return response('Payment not found', 404);
-                }
+            if (!$payment) {
+                Log::warning("BillPlz callback: no payment found for bill ID {$billId}");
+                return response('Payment not found', 404);
+            }
 
-                if ($payment->status === 'paid') {
-                    return response('Already processed', 200);
-                }
+            if ($payment->status === 'paid') {
+                return response('Already processed', 200);
+            }
 
-                if (isset($data['amount']) && (float) $data['amount'] !== (float) ($payment->amount * 100)) {
-                    Log::error("BillPlz callback: amount mismatch for bill ID {$billId}");
-                    return response('Amount mismatch', 422);
-                }
+            // Validate callback amount matches expected amount (BillPlz sends cents)
+            if (isset($data['amount']) && (float) $data['amount'] !== (float) ($payment->amount * 100)) {
+                Log::error("BillPlz callback: amount mismatch for bill ID {$billId}. Expected: {$payment->amount}, Got: " . ((float)$data['amount'] / 100));
+                return response('Amount mismatch', 422);
+            }
 
-                if ($isPaid) {
-                    $this->handleSuccessfulPayment($payment, $subscriptionService);
-                } else {
-                    $this->handleFailedPayment($payment, $billId);
-                }
+            if ($isPaid) {
+                $this->handleSuccessfulPayment($payment, $subscriptionService);
+            } else {
+                $this->handleFailedPayment($payment, $billId);
+            }
 
-                return response('OK', 200);
-            });
-        } catch (\Exception $e) {
-            Log::error("Failed to process payment for bill {$billId}: {$e->getMessage()}");
-            return response('System Error', 500);
-        }
+            return response('OK', 200);
+        });
     }
 
     /**

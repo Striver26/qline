@@ -15,15 +15,44 @@
 
         <form wire:submit="save" class="space-y-8">
             <div class="soft-card">
-                <p class="metric-label">Basic Information</p>
+                <p class="metric-label">Business Information</p>
                 <div class="mt-5 space-y-5">
                     <flux:input wire:model="form.name" :label="__('Business Name')" placeholder="e.g. Warung Ahmad" type="text" required autofocus />
+                    
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <flux:input wire:model="form.phone" :label="__('Business Phone Number')" placeholder="+60123456789" type="text" />
+                        <flux:input wire:model="form.postcode" :label="__('Postcode')" placeholder="e.g. 50000" type="text" />
+                    </div>
+
+                    <flux:textarea wire:model="form.address" :label="__('Business Address')" rows="2" placeholder="Your business location..." />
+
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <flux:input wire:model="form.city" :label="__('City')" placeholder="e.g. Kuala Lumpur" type="text" />
+                        <flux:input wire:model="form.state" :label="__('State')" placeholder="e.g. WP" type="text" />
+                    </div>
                 </div>
             </div>
 
             <div class="soft-card">
                 <p class="metric-label">Queue Configuration</p>
-                <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                
+                @if(auth()->user()->profile_completed)
+                    <div class="mt-5 space-y-4">
+                        <p class="text-sm font-medium text-slate-900 dark:text-white">Customer Entry Materials</p>
+                        <flux:button 
+                            as="a" 
+                            href="{{ route('business.qr', ['print' => 1]) }}" 
+                            target="_blank" 
+                            variant="ghost" 
+                            class="!bg-brand-50 text-brand-700 w-full rounded-2xl border-2 border-dashed border-brand-200 py-6 flex flex-col items-center justify-center gap-2"
+                        >
+                            <flux:icon.printer class="h-6 w-6" />
+                            <span class="font-bold uppercase tracking-widest text-xs">Print QR Standee</span>
+                        </flux:button>
+                    </div>
+                @endif
+
+                <div class="mt-8 grid gap-6 sm:grid-cols-2">
                     <flux:field>
                         <flux:label>{{ __('WhatsApp Join Code') }}</flux:label>
 
@@ -46,20 +75,31 @@
                         <flux:error name="queue_prefix" />
                     </flux:field>
                 </div>
+
+                @if($business = auth()->user()->getActiveBusiness())
+                    <div class="mt-8 space-y-6 border-t border-slate-100 dark:border-white/5 pt-6">
+                        <flux:field>
+                            <flux:label>{{ __('Public Join URL') }}</flux:label>
+                            <div class="flex items-center gap-2">
+                                <flux:input readonly value="{{ route('public.join', $business->slug) }}" class="bg-slate-50 dark:bg-white/5" />
+                                <flux:button icon="clipboard" variant="ghost" x-on:click="navigator.clipboard.writeText('{{ route('public.join', $business->slug) }}'); $flux.toast('URL Copied!')" />
+                            </div>
+                            <flux:description>{{ __('Direct link for customers to join your queue from their browser.') }}</flux:description>
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>{{ __('TV Display URL') }}</flux:label>
+                            <div class="flex items-center gap-2">
+                                <flux:input readonly value="{{ route('public.tv', ['slug' => $business->slug, 'token' => $business->tv_token]) }}" class="bg-slate-50 dark:bg-white/5" />
+                                <flux:button icon="clipboard" variant="ghost" x-on:click="navigator.clipboard.writeText('{{ route('public.tv', ['slug' => $business->slug, 'token' => $business->tv_token]) }}'); $flux.toast('TV URL Copied!')" />
+                            </div>
+                            <flux:description>{{ __('Private link for your big screen display. Keep the token secret.') }}</flux:description>
+                        </flux:field>
+                    </div>
+                @endif
             </div>
 
-            <div class="soft-card">
-                <p class="metric-label">Contact Details</p>
-                <div class="mt-5 space-y-5">
-                    <flux:input wire:model="form.phone" :label="__('Support Phone Number')" placeholder="+60123456789" type="text" />
-                    <flux:textarea wire:model="form.address" :label="__('Business Address')" rows="2" placeholder="Your business location..." />
-                    <div class="grid gap-5 sm:grid-cols-3">
-                        <flux:input wire:model="form.city" :label="__('City')" placeholder="e.g. Kuala Lumpur" type="text" />
-                        <flux:input wire:model="form.state" :label="__('State')" placeholder="e.g. WP" type="text" />
-                        <flux:input wire:model="form.postcode" :label="__('Postcode')" placeholder="e.g. 50000" type="text" />
-                    </div>
-                </div>
-            </div>
+
 
             <div class="soft-card">
                 <p class="metric-label">Operating Hours & Timezone</p>

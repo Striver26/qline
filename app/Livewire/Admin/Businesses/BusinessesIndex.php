@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Businesses;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Tenant\Business;
+use App\Models\AdminAuditLog;
 
 class BusinessesIndex extends Component
 {
@@ -51,7 +52,15 @@ class BusinessesIndex extends Component
 
     public function deleteBusiness()
     {
-        Business::findOrFail($this->deletingBizId)->delete();
+        $biz = Business::findOrFail($this->deletingBizId);
+
+        AdminAuditLog::record('business.delete', $biz, [
+            'name'     => $biz->name,
+            'slug'     => $biz->slug,
+            'join_code'=> $biz->join_code,
+        ]);
+
+        $biz->delete();
         $this->dispatch('modal-close', name: 'delete-business');
         session()->flash('status', "Tenant profoundly deleted.");
     }
@@ -62,8 +71,10 @@ class BusinessesIndex extends Component
             ->when(
                 $this->search,
                 fn($q) =>
-                $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('join_code', 'like', '%' . $this->search . '%')
+                $q->where(function ($inner) {
+                    $inner->where('name', 'like', '%' . $this->search . '%')
+                          ->orWhere('join_code', 'like', '%' . $this->search . '%');
+                })
             )
             ->when(
                 $this->filterStatus,

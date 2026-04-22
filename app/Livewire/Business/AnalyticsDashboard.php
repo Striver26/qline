@@ -14,12 +14,13 @@ class AnalyticsDashboard extends Component
 
     public function mount()
     {
-        $this->business = auth()->user()->business;
+        $this->business = auth()->user()->getActiveBusiness();
     }
 
     #[\Livewire\Attributes\Computed]
-    public function queueStats(\App\Services\Analytics\QueueAnalyticsService $analyticsService): array
+    public function queueStats(): array
     {
+        $analyticsService = app(\App\Services\Analytics\QueueAnalyticsService::class);
         return $analyticsService->getSummaryStats($this->business);
     }
 

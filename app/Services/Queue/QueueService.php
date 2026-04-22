@@ -171,6 +171,14 @@ class QueueService
                 return null;
             }
 
+            // Enforce tier entitlement for counters
+            $tier = $business->subscription?->type->value ?? $business->subscription?->type;
+            $canUseCounters = config("qline.tiers.{$tier}.counters", false);
+            
+            if (!$canUseCounters) {
+                $counterId = null;
+            }
+
             $nextEntry->update([
                 'status' => QueueStatus::CALLED->value,
                 'counter_id' => $counterId,

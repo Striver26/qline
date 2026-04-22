@@ -15,7 +15,17 @@ class WhatsappMessage extends Model
         'body',
         'message_id',
         'status',
+        'delivered_at',
+        'read_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'delivered_at' => 'datetime',
+            'read_at' => 'datetime',
+        ];
+    }
 
     public function business()
     {

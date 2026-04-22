@@ -44,7 +44,7 @@ class LoyaltyRewards extends Component
     {
         if (! $this->isOwner()) return;
 
-        $reward = LoyaltyReward::where('business_id', auth()->user()->business_id)
+        $reward = LoyaltyReward::where('business_id', auth()->user()->getActiveBusiness()?->id)
             ->findOrFail($id);
 
         $this->editingId = $reward->id;
@@ -61,7 +61,7 @@ class LoyaltyRewards extends Component
         $this->validate();
 
         $data = [
-            'business_id' => auth()->user()->business_id,
+            'business_id' => auth()->user()->getActiveBusiness()?->id,
             'reward_value' => $this->reward_value,
             'required_visits' => $this->required_visits,
             'reward_type' => $this->reward_type,
@@ -80,7 +80,7 @@ class LoyaltyRewards extends Component
 
     private function updateExistingReward(array $data): void
     {
-        LoyaltyReward::where('business_id', auth()->user()->business_id)
+        LoyaltyReward::where('business_id', auth()->user()->getActiveBusiness()?->id)
             ->where('id', $this->editingId)
             ->update($data);
     }
@@ -95,7 +95,7 @@ class LoyaltyRewards extends Component
     {
         if (! $this->isOwner()) return;
 
-        LoyaltyReward::where('business_id', auth()->user()->business_id)
+        LoyaltyReward::where('business_id', auth()->user()->getActiveBusiness()?->id)
             ->where('id', $id)
             ->delete();
     }
@@ -107,7 +107,7 @@ class LoyaltyRewards extends Component
 
     public function render()
     {
-        $businessId = auth()->user()->business_id;
+        $businessId = auth()->user()->getActiveBusiness()?->id;
 
         $rewards = LoyaltyReward::where('business_id', $businessId)
             ->orderBy('required_visits')

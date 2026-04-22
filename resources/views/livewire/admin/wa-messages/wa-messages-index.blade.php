@@ -24,6 +24,7 @@
                 <flux:table.column>Business</flux:table.column>
                 <flux:table.column>Direction</flux:table.column>
                 <flux:table.column>Recipient</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
                 <flux:table.column>Content</flux:table.column>
                 <flux:table.column>Date</flux:table.column>
             </flux:table.columns>
@@ -35,6 +36,20 @@
                             <span class="badge-pill badge-pill--brand">{{$msg->direction}}</span>
                         </flux:table.cell>
                         <flux:table.cell>{{$msg->wa_id}}</flux:table.cell>
+                        <flux:table.cell>
+                            @php
+                                $statusColors = [
+                                    'sent' => 'border-slate-200 bg-slate-50 text-slate-600',
+                                    'delivered' => 'border-blue-200 bg-blue-50 text-blue-700',
+                                    'read' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                                    'failed' => 'border-rose-200 bg-rose-50 text-rose-700',
+                                ];
+                                $colorClass = $statusColors[$msg->status] ?? 'border-slate-200 bg-slate-100 text-slate-700';
+                            @endphp
+                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider {{ $colorClass }}">
+                                {{ $msg->status }}
+                            </span>
+                        </flux:table.cell>
                         <flux:table.cell><span class="truncate max-w-[250px] inline-block">{{$msg->body}}</span></flux:table.cell>
                         <flux:table.cell>{{$msg->created_at->format('M d h:i A')}}</flux:table.cell>
                     </flux:table.row>

@@ -48,11 +48,28 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the user's current business tenant
+     * Get the user's current business tenant.
+     * Fallback to the owned business if business_id is not set.
      */
     public function business(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Tenant\Business::class);
+    }
+
+    /**
+     * Get the business owned by this user (for owners).
+     */
+    public function ownedBusiness(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\Tenant\Business::class, 'user_id');
+    }
+
+    /**
+     * Helper to get the active business regardless of how it's linked.
+     */
+    public function getActiveBusiness(): ?\App\Models\Tenant\Business
+    {
+        return $this->business ?: $this->ownedBusiness;
     }
 
     public function isOwner(): bool

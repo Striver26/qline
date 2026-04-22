@@ -73,19 +73,19 @@
                 <flux:sidebar.group :heading="__('Operations')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('business.dashboard')"
                         :current="request()->routeIs('business.dashboard')" wire:navigate>
-                        {{ __('Command Center') }}
+                        {{ __('Queue Center') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="clock" :href="route('business.entries')"
                         :current="request()->routeIs('business.entries')" wire:navigate>
                         {{ __('Queue History') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="qr-code" :href="route('business.qr')"
-                        :current="request()->routeIs('business.qr')" wire:navigate>
-                        {{ __('QR Standee') }}
-                    </flux:sidebar.item>
                     <flux:sidebar.item icon="chat-bubble-bottom-center-text" :href="route('business.feedback')"
                         :current="request()->routeIs('business.feedback')" wire:navigate>
                         {{ __('Feedback') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="computer-desktop" :href="route('business.counters')"
+                        :current="request()->routeIs('business.counters')" wire:navigate>
+                        {{ __('Counters') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>

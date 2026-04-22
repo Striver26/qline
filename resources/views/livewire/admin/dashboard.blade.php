@@ -17,12 +17,13 @@
             <h3 class="metric-value">{{$totalBusinesses}}</h3>
         </div>
         <div class="metric-card">
-            <p class="metric-label">All-time Tickets</p>
+            <p class="metric-label">Active Tickets Now</p>
             <h3 class="metric-value">{{$activeTickets}}</h3>
+            <p class="mt-2 text-xs text-slate-400">Waiting, Called, or Serving</p>
         </div>
         <div class="metric-card">
-            <p class="metric-label">Platform Revenue</p>
-            <h3 class="metric-value">MYR {{number_format($totalRevenue, 2)}}</h3>
+            <p class="metric-label">Revenue (Last 30 days)</p>
+            <h3 class="metric-value">MYR {{number_format($revenue30d, 2)}}</h3>
         </div>
     </div>
 </div>

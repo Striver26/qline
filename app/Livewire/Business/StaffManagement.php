@@ -28,7 +28,7 @@ class StaffManagement extends Component
         return Invitation::create([
             'email' => $this->email,
             'role' => \App\Enums\UserRole::BUSINESS_STAFF->value ?? 'business_staff',
-            'business_id' => auth()->user()->business_id,
+            'business_id' => auth()->user()->getActiveBusiness()?->id,
             'invited_by' => auth()->id(),
             'token' => Str::random(32),
             'expires_at' => now()->addDays(3),
@@ -40,7 +40,7 @@ class StaffManagement extends Component
         \Illuminate\Support\Facades\Mail::to($this->email)->send(
             new \App\Mail\StaffInvitationMail(
                 invitation: $invitation,
-                businessName: auth()->user()->business->name ?? 'Your Business',
+                businessName: auth()->user()->getActiveBusiness()->name ?? 'Your Business',
                 inviterName: auth()->user()->name,
             )
         );
@@ -48,7 +48,7 @@ class StaffManagement extends Component
 
     public function revokeInvite(int $inviteId)
     {
-        $invite = Invitation::where('business_id', auth()->user()->business_id)
+        $invite = Invitation::where('business_id', auth()->user()->getActiveBusiness()?->id)
             ->where('id', $inviteId)
             ->first();
             
@@ -59,7 +59,7 @@ class StaffManagement extends Component
 
     public function deleteStaff(int $staffId)
     {
-        $staff = User::where('business_id', auth()->user()->business_id)
+        $staff = User::where('business_id', auth()->user()->getActiveBusiness()?->id)
             ->where('id', $staffId)
             ->where('id', '!=', auth()->id()) // Prevent self delete
             ->first();
@@ -72,9 +72,10 @@ class StaffManagement extends Component
 
     public function render()
     {
-        $staff = User::where('business_id', auth()->user()->business_id)->get();
+        $businessId = auth()->user()->getActiveBusiness()?->id;
+        $staff = User::where('business_id', $businessId)->get();
             
-        $invitations = Invitation::where('business_id', auth()->user()->business_id)
+        $invitations = Invitation::where('business_id', $businessId)
             ->whereNull('accepted_at')
             ->orderBy('created_at', 'desc')
             ->get();

@@ -19,7 +19,12 @@ class SubscriptionBilling extends Component
             return;
         }
 
-        $business = auth()->user()->business;
+        $business = auth()->user()->getActiveBusiness();
+
+        if (!$business) {
+            session()->flash('error', 'Business account not found.');
+            return;
+        }
 
         $tierConfig = config("qline.tiers.{$tier}");
         $amount = $tierConfig['price'] ?? ($tier === 'daily' ? 10.00 : 300.00);
@@ -38,9 +43,13 @@ class SubscriptionBilling extends Component
 
     public function render()
     {
-        $business = auth()->user()->business;
+        $business = auth()->user()->getActiveBusiness();
+        if (!$business) {
+             return view('livewire.business.subscription-billing', ['business' => null, 'subscription' => null, 'payments' => collect()])
+                ->layout('layouts.app');
+        }
         $subscription = $business->subscription;
-        $payments = Payment::where('business_id', $business->id)->orderBy('created_at', 'desc')->get();
+        $payments = Payment::where('business_id', $business->id)->orderBy('created_at', 'desc')->limit(20)->get();
 
         return view('livewire.business.subscription-billing', compact('business', 'subscription', 'payments'))
             ->layout('layouts.app');

@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Users;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
+use App\Models\AdminAuditLog;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -90,7 +91,14 @@ class UsersIndex extends Component
             return;
         }
 
+        $oldRole = $user->role instanceof \App\Enums\UserRole ? $user->role->value : $user->role;
         $user->update(['role' => $this->editRole]);
+
+        AdminAuditLog::record('user.role_change', $user, [
+            'old_role' => $oldRole,
+            'new_role' => $this->editRole,
+        ]);
+
         $this->dispatch('modal-close', name: 'edit-user');
         session()->flash('status', "User role smoothly updated.");
     }
@@ -118,6 +126,12 @@ class UsersIndex extends Component
             $this->dispatch('modal-close', name: 'delete-user');
             return;
         }
+
+        AdminAuditLog::record('user.delete', $user, [
+            'name'  => $user->name,
+            'email' => $user->email,
+            'role'  => $user->role instanceof \App\Enums\UserRole ? $user->role->value : $user->role,
+        ]);
 
         $user->delete();
         $this->dispatch('modal-close', name: 'delete-user');

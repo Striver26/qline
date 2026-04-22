@@ -37,8 +37,10 @@ class PaymentsIndex extends Component
     {
         $payments = Payment::with('business')
             ->when($this->search, function($q) {
-                $q->whereHas('business', fn($b) => $b->where('name', 'like', '%'.$this->search.'%'))
-                  ->orWhere('reference', 'like', '%'.$this->search.'%');
+                $q->where(function ($inner) {
+                    $inner->whereHas('business', fn($b) => $b->where('name', 'like', '%'.$this->search.'%'))
+                          ->orWhere('reference', 'like', '%'.$this->search.'%');
+                });
             })
             ->when($this->filterStatus, function($q) {
                 $q->where('status', $this->filterStatus);

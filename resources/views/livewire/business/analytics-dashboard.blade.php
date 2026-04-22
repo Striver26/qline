@@ -29,6 +29,12 @@
         </div>
 
         <div class="metric-card">
+            <p class="metric-label">Avg. Service Time</p>
+            <p class="metric-value mt-4 text-emerald-600">{{ $this->queueStats['avg_service_time'] }} min</p>
+            <p class="mt-2 text-sm text-slate-500">From call to completion</p>
+        </div>
+
+        <div class="metric-card">
             <p class="metric-label">Peak Traffic Time</p>
             <p class="metric-value mt-4 text-ui-600">{{ $this->queueStats['busiest_hour'] }}</p>
             <p class="mt-2 text-sm text-slate-500">Busiest hour of operations</p>

@@ -44,8 +44,16 @@ class WhatsAppWebhookController extends Controller
         $payload = $request->all();
         Log::info('Incoming Meta Webhook', ['payload' => $payload]);
 
-        if (!isset($payload['entry'][0]['changes'][0]['value']['messages'][0])) {
-            return response('OK', 200); // Probably a status update
+        $value = $payload['entry'][0]['changes'][0]['value'] ?? [];
+
+        // Handle status updates (sent, delivered, read, failed)
+        if (isset($value['statuses'][0])) {
+            $this->handleStatusUpdate($value['statuses'][0]);
+            return response('OK', 200);
+        }
+
+        if (!isset($value['messages'][0])) {
+            return response('OK', 200);
         }
 
         $message = $payload['entry'][0]['changes'][0]['value']['messages'][0];
@@ -75,6 +83,33 @@ class WhatsAppWebhookController extends Controller
         }
 
         return response('OK', 200);
+    }
+
+    /**
+     * Update the status of a sent message.
+     */
+    protected function handleStatusUpdate(array $statusUpdate): void
+    {
+        $messageId = $statusUpdate['id'];
+        $status = $statusUpdate['status'];
+        $timestamp = now();
+
+        $message = \App\Models\Marketing\WhatsappMessage::where('message_id', $messageId)->first();
+
+        if ($message) {
+            $updateData = ['status' => $status];
+
+            if ($status === 'delivered') {
+                $updateData['delivered_at'] = $timestamp;
+            } elseif ($status === 'read') {
+                $updateData['read_at'] = $timestamp;
+                if (!$message->delivered_at) {
+                    $updateData['delivered_at'] = $timestamp;
+                }
+            }
+
+            $message->update($updateData);
+        }
     }
 
     /**

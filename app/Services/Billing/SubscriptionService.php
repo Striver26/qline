@@ -31,9 +31,18 @@ class SubscriptionService
         ]);
 
         $dailyLimit = $tierConfig['daily_limit'] ?? 100;
-        $subscription->business?->update([
+        $business = $subscription->business;
+        $business?->update([
             'daily_limit' => $dailyLimit === 0 ? 999999 : $dailyLimit,
         ]);
+
+        // Seed a default counter if tier supports counters and none exist
+        if (($tierConfig['counters'] ?? false) && $business && $business->counters()->count() === 0) {
+            $business->counters()->create([
+                'name' => 'Counter 1',
+                'is_active' => true,
+            ]);
+        }
 
         Log::info("Subscription activated for business #{$subscription->business_id}", [
             'tier' => $tier,

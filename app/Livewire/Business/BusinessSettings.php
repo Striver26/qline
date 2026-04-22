@@ -14,7 +14,7 @@ class BusinessSettings extends Component
     public function mount()
     {
         $user = auth()->user();
-        $this->form->loadFromBusiness($user->business);
+        $this->form->loadFromBusiness($user->getActiveBusiness());
     }
 
     public function save()
@@ -22,14 +22,15 @@ class BusinessSettings extends Component
         $user = auth()->user();
 
         $this->form->validate();
+        $business = $user->getActiveBusiness();
 
-        if (!$user->business) {
+        if (!$business) {
             $this->createBusinessAccount($user);
             session()->flash('success', 'Business settings successfully saved. You are ready to open your queue.');
             return redirect()->route('business.dashboard');
         }
 
-        $this->updateBusinessAccount($user->business);
+        $this->updateBusinessAccount($business);
         $this->dispatch('profile-updated', name: $user->name);
     }
 

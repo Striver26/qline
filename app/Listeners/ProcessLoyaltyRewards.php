@@ -6,19 +6,10 @@ use App\Events\TicketCompleted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class ProcessLoyaltyRewards
+class ProcessLoyaltyRewards implements ShouldQueue
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct()
-    {
-        //
-    }
+    use InteractsWithQueue;
 
-    /**
-     * Handle the event.
-     */
     public function handle(TicketCompleted $event): void
     {
         $entry = $event->entry;
@@ -27,16 +18,18 @@ class ProcessLoyaltyRewards
             return;
         }
 
-        $visitNumber = \App\Models\Marketing\LoyaltyVisit::where('business_id', $entry->business_id)
-            ->where('wa_id', $entry->wa_id)
-            ->count() + 1;
-
-        \App\Models\Marketing\LoyaltyVisit::create([
-            'business_id' => $entry->business_id,
-            'wa_id' => $entry->wa_id,
+        // Use firstOrCreate so that queue retries don't double-count visits
+        $visit = \App\Models\Marketing\LoyaltyVisit::firstOrCreate([
+            'business_id'    => $entry->business_id,
             'queue_entry_id' => $entry->id,
-            'visit_number' => $visitNumber
+        ], [
+            'wa_id'        => $entry->wa_id,
+            'visit_number' => \App\Models\Marketing\LoyaltyVisit::where('business_id', $entry->business_id)
+                ->where('wa_id', $entry->wa_id)
+                ->count() + 1,
         ]);
+
+        $visitNumber = $visit->visit_number;
 
         // Check if any loyalty rewards were earned
         $rewards = \App\Models\Marketing\LoyaltyReward::where('business_id', $entry->business_id)
@@ -44,12 +37,19 @@ class ProcessLoyaltyRewards
             ->get();
 
         foreach ($rewards as $reward) {
+            if ($reward->required_visits <= 0) {
+                continue;
+            }
+
             if ($visitNumber % $reward->required_visits === 0) {
-                \App\Models\Marketing\EarnedReward::create([
+                // firstOrCreate protects against duplicate rewards on queue retry
+                \App\Models\Marketing\EarnedReward::firstOrCreate([
+                    'queue_entry_id'   => $entry->id,
+                    'loyalty_reward_id'=> $reward->id,
+                ], [
                     'business_id' => $entry->business_id,
-                    'wa_id' => $entry->wa_id,
-                    'loyalty_reward_id' => $reward->id,
-                    'status' => \App\Enums\RewardStatus::AVAILABLE->value
+                    'wa_id'       => $entry->wa_id,
+                    'status'      => \App\Enums\RewardStatus::AVAILABLE->value,
                 ]);
             }
         }

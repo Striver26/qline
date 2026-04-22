@@ -14,10 +14,21 @@ class QueueDashboard extends Component
 {
     public Business $business;
     public string $pauseReason = '';
+    public ?int $selectedCounterId = null;
 
     public function mount()
     {
-        $this->business = auth()->user()->business;
+        $business = auth()->user()->getActiveBusiness();
+        
+        if (!$business) {
+            return redirect()->route('business.settings')
+                ->with('warning', 'Please complete your business profile.');
+        }
+
+        $this->business = $business;
+        
+        // Default to first active counter if available
+        $this->selectedCounterId = $this->business->counters()->where('is_active', true)->first()?->id;
     }
 
     #[\Livewire\Attributes\Computed]
@@ -40,7 +51,7 @@ class QueueDashboard extends Component
 
     public function callNext(QueueService $queueService)
     {
-        $queueService->callNext($this->business);
+        $queueService->callNext($this->business, $this->selectedCounterId);
         $this->business->refresh();
     }
 
@@ -141,6 +152,12 @@ class QueueDashboard extends Component
             \App\Enums\BusinessQueueStatus::OPEN->value, 
             \App\Enums\BusinessQueueStatus::PAUSED->value
         ], true);
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function activeCounters()
+    {
+        return $this->business->counters()->where('is_active', true)->get();
     }
 }
 

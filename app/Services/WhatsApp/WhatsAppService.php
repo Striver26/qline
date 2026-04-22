@@ -36,7 +36,9 @@ class WhatsAppService
             ]);
         }
 
-        $response = Http::withToken($this->token)->post($this->url, [
+        $response = Http::withToken($this->token)
+            ->timeout(15)
+            ->post($this->url, [
             'messaging_product' => 'whatsapp',
             'to' => $to,
             'type' => 'text',

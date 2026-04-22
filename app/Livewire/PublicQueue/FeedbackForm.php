@@ -51,13 +51,15 @@ class FeedbackForm extends Component
 
     private function storeFeedbackRecord(): void
     {
-        CustomerFeedback::create([
-            'business_id' => $this->business->id,
-            'queue_entry_id' => $this->entry->id,
-            'wa_id' => $this->entry->wa_id ?? 'Anonymous',
-            'rating' => $this->rating,
-            'comment' => $this->comment ?: null,
-        ]);
+        CustomerFeedback::updateOrCreate(
+            ['queue_entry_id' => $this->entry->id],
+            [
+                'business_id' => $this->business->id,
+                'wa_id'       => $this->entry->wa_id ?? 'Anonymous',
+                'rating'      => $this->rating,
+                'comment'     => $this->comment ?: null,
+            ]
+        );
     }
 
     public function render()

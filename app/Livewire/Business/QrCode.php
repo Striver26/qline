@@ -8,7 +8,7 @@ class QrCode extends Component
 {
     public function render()
     {
-        $business = auth()->user()->business;
+        $business = auth()->user()->getActiveBusiness();
         $url = route('public.join', ['slug' => $business->slug]);
 
         // Define options explicitly
@@ -21,11 +21,13 @@ class QrCode extends Component
 
         $qrCode = (new \chillerlan\QRCode\QRCode($options))->render($url);
 
+        $layout = request()->has('print') ? 'layouts.print' : 'layouts.app';
+
         return view('livewire.business.qr-code', [
             'business' => $business,
             'qrCode' => $qrCode,
             'url' => $url,
             'joinCode' => $business->join_code ?? 'SETUP_REQUIRED'
-        ])->layout('layouts.app');
+        ])->layout($layout);
     }
 }

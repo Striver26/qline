@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <div class="grid gap-6 xl:grid-cols-2">
+    <div class="grid gap-6 xl:grid-cols-3">
         <div class="pricing-card">
             <span class="badge-pill">Flexible</span>
             <h2 class="mt-6 text-3xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Daily Pass</h2>
@@ -55,11 +55,11 @@
                 Great when you want queue control on demand without committing to a full month.
             </p>
 
-            <p class="mt-8 text-5xl font-bold tracking-[-0.07em] text-slate-950 dark:text-white">RM 15<span
+            <p class="mt-8 text-5xl font-bold tracking-[-0.07em] text-slate-950 dark:text-white">RM 10<span
                     class="ml-2 text-base font-semibold text-slate-400">/day</span></p>
 
             <ul class="mt-8 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <li>Standard queue operations</li>
+                <li>100 tickets daily limit</li>
                 <li>WhatsApp notifications</li>
                 <li>QR standee access</li>
             </ul>
@@ -69,30 +69,52 @@
             </flux:button>
         </div>
 
+        <div class="pricing-card">
+            <span class="badge-pill">Popular</span>
+            <h2 class="mt-6 text-3xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Monthly Base</h2>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                Ideal for steady businesses that want monthly predictability and higher limits.
+            </p>
+
+            <p class="mt-8 text-5xl font-bold tracking-[-0.07em] text-slate-950 dark:text-white">RM 300<span
+                    class="ml-2 text-base font-semibold text-slate-400">/mo</span></p>
+
+            <ul class="mt-8 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                <li>500 tickets daily limit</li>
+                <li>WhatsApp notifications</li>
+                <li>Customer feedback module</li>
+                <li>Loyalty rewards engine</li>
+            </ul>
+
+            <flux:button wire:click="subscribe('monthly')" class="btn-link-secondary mt-8 w-full !rounded-full !py-3.5">
+                Go Monthly
+            </flux:button>
+        </div>
+
         <div class="pricing-card mesh-accent text-white">
             <div
                 class="absolute right-6 top-6 rounded-full bg-white/15 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em] backdrop-blur-sm">
-                Best Value
+                Pro Power
             </div>
 
             <h2 class="text-3xl font-bold tracking-[-0.05em]">Monthly Ultimate</h2>
             <p class="mt-3 text-sm text-white/78">
-                Ideal for teams that manage queues every day and want loyalty plus feedback tools included.
+                The full QLine experience with unlimited volume and multi-counter operations.
             </p>
 
-            <p class="mt-8 text-5xl font-bold tracking-[-0.07em]">RM 400<span
-                    class="ml-2 text-base font-semibold text-white/65">/month</span></p>
+            <p class="mt-8 text-5xl font-bold tracking-[-0.07em]">RM 450<span
+                    class="ml-2 text-base font-semibold text-white/65">/mo</span></p>
 
             <ul class="mt-8 space-y-3 text-sm text-white/82">
-                <li>All Daily features included</li>
-                <li>Customer feedback module</li>
-                <li>Loyalty rewards engine</li>
-                <li>Multi-counter ready operations</li>
+                <li>Unlimited daily tickets</li>
+                <li>Multi-counter operations</li>
+                <li>Advanced analytics</li>
+                <li>Priority support</li>
             </ul>
 
-            <flux:button wire:click="subscribe('monthly')"
+            <flux:button wire:click="subscribe('advanced')"
                 class="mt-8 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-brand-700 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.4)] transition duration-300 hover:-translate-y-0.5 hover:bg-slate-100">
-                Upgrade to Monthly
+                Get Advanced
             </flux:button>
         </div>
     </div>

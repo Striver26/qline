@@ -38,18 +38,29 @@ class BillPlzService
             ];
         }
 
+        // Resolve the billing contact — use the business owner's email
+        $billingEmail = $business->users()
+            ->where('role', \App\Enums\UserRole::BUSINESS_OWNER->value)
+            ->value('email');
+
+        if (!$billingEmail) {
+            throw new \Exception('No billing contact email found for this business.');
+        }
+
         // BillPlz requires amounts in cents (e.g., 100 = RM 1.00)
         $amountInCents = intval($amount * 100);
 
         $response = Http::withBasicAuth($this->secretKey, '')
+            ->timeout(30)
+            ->retry(2, 500)
             ->post("{$this->baseUrl}/bills", [
                 'collection_id' => $this->collectionId,
-                'email' => 'admin@qline.local', // Requires valid email
-                'name' => $business->name,
-                'amount' => $amountInCents, 
-                'callback_url' => $callbackUrl,
-                'redirect_url' => $redirectUrl,
-                'description' => $description
+                'email'         => $billingEmail,
+                'name'          => $business->name,
+                'amount'        => $amountInCents,
+                'callback_url'  => $callbackUrl,
+                'redirect_url'  => $redirectUrl,
+                'description'   => $description,
             ]);
 
         if (!$response->successful()) {
