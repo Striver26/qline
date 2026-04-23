@@ -33,7 +33,7 @@ class BusinessSettingsForm extends Form
             $this->state = $business->state;
             $this->postcode = $business->postcode;
             $this->timezone = $business->timezone ?? 'Asia/Kuala_Lumpur';
-            $this->business_hours = $business->business_hours ?? $this->defaultHours();
+            $this->business_hours = $this->normalizeHours($business->business_hours);
         } else {
             $this->join_code = strtoupper(Str::random(6));
             $this->queue_prefix = 'A';
@@ -41,14 +41,55 @@ class BusinessSettingsForm extends Form
         }
     }
 
+    private function normalizeHours($hours)
+    {
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $normalized = [];
+
+        foreach ($days as $day) {
+            $data = $hours[$day] ?? null;
+            
+            // Handle old format [open, close]
+            if (is_array($data) && isset($data[0], $data[1])) {
+                $normalized[$day] = [
+                    'open' => $data[0],
+                    'close' => $data[1],
+                    'is_open' => true
+                ];
+            } 
+            // Handle new format or missing data
+            else {
+                $normalized[$day] = [
+                    'open' => $data['open'] ?? '09:00',
+                    'close' => $data['close'] ?? '18:00',
+                    'is_open' => $data['is_open'] ?? true
+                ];
+            }
+        }
+
+        return $normalized;
+    }
+
     private function defaultHours()
     {
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         $hours = [];
         foreach ($days as $day) {
-            $hours[$day] = ['09:00', '18:00'];
+            $hours[$day] = [
+                'open' => '09:00',
+                'close' => '18:00',
+                'is_open' => !in_array($day, ['saturday', 'sunday'])
+            ];
         }
         return $hours;
+    }
+
+    public function copyToAll($sourceDay)
+    {
+        $source = $this->business_hours[$sourceDay];
+        foreach ($this->business_hours as $day => $config) {
+            $this->business_hours[$day] = $source;
+        }
     }
 
     public function rules(): array

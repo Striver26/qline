@@ -75,6 +75,12 @@ class BusinessSettings extends Component
         ]);
     }
 
+    public function copyToAll($sourceDay)
+    {
+        $this->form->copyToAll($sourceDay);
+        $this->dispatch('profile-updated', name: 'Hours updated');
+    }
+
     public function render()
     {
         return view('livewire.business.business-settings')

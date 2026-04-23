@@ -78,8 +78,15 @@ class CleanupStaleQueues extends Command
             return false; // Leave as is if no explicit hours are provided
         }
 
-        $openTime = $hours[$day][0] ?? '00:00';
-        $closeTime = $hours[$day][1] ?? '23:59';
+        $config = $hours[$day];
+
+        // If explicitly marked as closed for the day
+        if (isset($config['is_open']) && !$config['is_open']) {
+            return true;
+        }
+
+        $openTime = $config['open'] ?? '00:00';
+        $closeTime = $config['close'] ?? '23:59';
 
         // Same time means open 24h
         if ($openTime === $closeTime) {

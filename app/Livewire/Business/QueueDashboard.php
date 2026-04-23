@@ -115,11 +115,21 @@ class QueueDashboard extends Component
     public function addCustomer(QueueService $queueService)
     {
         try {
-            $queueService->addManual($this->business);
+            $entry = $queueService->addManual($this->business);
             $this->business->refresh();
+            
+            // Trigger thermal print
+            $this->dispatch('print-ticket', entryId: $entry->id);
+            
+            session()->flash('success', "Ticket {$entry->ticket_code} added successfully.");
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }
+    }
+
+    public function printEntry(int $entryId)
+    {
+        $this->dispatch('print-ticket', entryId: $entryId);
     }
 
     public function redeemReward(\App\Services\Marketing\RewardService $rewardService, int $rewardId)

@@ -114,21 +114,61 @@
                         <flux:description>{{ __('All automated open/close logic will follow this timezone.') }}</flux:description>
                     </flux:field>
 
-                    <div class="space-y-4">
-                        <p class="text-sm font-medium text-slate-900 dark:text-white">Weekly Schedule</p>
-                        <div class="grid gap-4 sm:max-w-xl">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ __('Weekly Schedule') }}</p>
+                            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-400">{{ __('Status') }}</span>
+                        </div>
+
+                        <div class="divide-y divide-slate-100 dark:divide-white/5">
                             @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                                <div class="flex items-center gap-4">
-                                    <div class="w-24 text-sm font-semibold capitalize text-slate-600 dark:text-slate-400">{{ __($day) }}</div>
-                                    <div class="flex flex-1 items-center gap-3">
-                                        <flux:input type="time" wire:model="form.business_hours.{{ $day }}.0" class="flex-1" />
-                                        <span class="text-slate-400">to</span>
-                                        <flux:input type="time" wire:model="form.business_hours.{{ $day }}.1" class="flex-1" />
+                                <div class="py-4 first:pt-0 last:pb-0" x-data="{ isOpen: @entangle('form.business_hours.' . $day . '.is_open') }">
+                                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                        <!-- Day Label & Toggle -->
+                                        <div class="flex min-w-[140px] items-center justify-between sm:justify-start sm:gap-4">
+                                            <span class="text-sm font-medium capitalize" :class="isOpen ? 'text-slate-900 dark:text-white' : 'text-slate-400 line-through'">
+                                                {{ __($day) }}
+                                            </span>
+                                            <flux:switch wire:model.live="form.business_hours.{{ $day }}.is_open" size="sm" />
+                                        </div>
+
+                                        <!-- Time Inputs -->
+                                        <div class="flex flex-1 items-center gap-3 transition-opacity duration-200" :class="isOpen ? 'opacity-100' : 'opacity-30 pointer-events-none'">
+                                            <div class="relative flex-1">
+                                                <flux:input type="time" wire:model="form.business_hours.{{ $day }}.open" class="!bg-transparent" />
+                                            </div>
+                                            <span class="text-xs font-bold uppercase tracking-tighter text-slate-400">to</span>
+                                            <div class="relative flex-1">
+                                                <flux:input type="time" wire:model="form.business_hours.{{ $day }}.close" class="!bg-transparent" />
+                                            </div>
+                                        </div>
+
+                                        <!-- Actions -->
+                                        <div class="flex items-center justify-end gap-2 sm:min-w-[100px]">
+                                            <flux:button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                icon="square-2-stack" 
+                                                wire:click="copyToAll('{{ $day }}')"
+                                                x-show="isOpen"
+                                                v-cloak
+                                                class="text-slate-400 hover:text-brand-600"
+                                                data-flux-tooltip="Copy to all days"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
-                        <flux:description>{{ __('Automated cleanup jobs will use these windows to close your queue if left open.') }}</flux:description>
+
+                        <div class="rounded-2xl bg-slate-50 p-4 dark:bg-white/5">
+                            <div class="flex gap-3">
+                                <flux:icon.information-circle class="mt-0.5 h-4 w-4 text-slate-400" />
+                                <p class="text-xs leading-relaxed text-slate-500">
+                                    {{ __('The system uses these windows to automatically close your queue. If a day is marked as closed, customers won\'t be able to join and any active queue will be closed automatically.') }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

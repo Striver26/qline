@@ -203,12 +203,28 @@
 
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $entry->ticket_code }}</p>
-                            <p class="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">
-                                {{ $entry->source === 'whatsapp' ? 'WhatsApp' : 'Anonymous' }}
-                            </p>
+                            <div class="mt-1 flex items-center gap-2">
+                                <p class="text-xs uppercase tracking-[0.24em] text-slate-400">
+                                    {{ $entry->source === 'whatsapp' ? 'WhatsApp' : 'Anonymous' }}
+                                </p>
+                                <span class="text-[10px] text-slate-300">•</span>
+                                <p class="text-[10px] font-bold text-brand-600 dark:text-brand-400">
+                                    ~{{ app(\App\Services\Queue\QueueService::class)->getPositionInfo($entry)['estimated_wait_mins'] }} mins
+                                </p>
+                            </div>
                         </div>
 
-                        <p class="text-xs text-slate-400">{{ $entry->created_at->diffForHumans() }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-xs text-slate-400">{{ $entry->created_at->diffForHumans() }}</p>
+                            
+                            <flux:button 
+                                wire:click="printEntry({{ $entry->id }})" 
+                                size="sm" 
+                                variant="ghost" 
+                                icon="printer" 
+                                class="text-slate-400 hover:text-brand-600" 
+                            />
+                        </div>
                     </div>
                 @empty
                     <div class="p-12 text-center text-slate-400">
@@ -236,4 +252,33 @@
             </div>
         </div>
     </flux:modal>
+
+    {{-- Thermal Printing Assets --}}
+    <div id="print-area">
+        @foreach($this->waitingEntries as $entry)
+            <x-queue.thermal-ticket :entry="$entry" :business="$business" />
+        @endforeach
+    </div>
+
+    @script
+    <script>
+        $wire.on('print-ticket', (data) => {
+            const entryId = data.entryId;
+            const element = document.getElementById('thermal-ticket-' + entryId);
+            
+            if (element) {
+                // Mark as printing
+                element.classList.add('is-printing');
+                
+                // Trigger print
+                setTimeout(() => {
+                    window.print();
+                    
+                    // Clean up
+                    element.classList.remove('is-printing');
+                }, 200);
+            }
+        });
+    </script>
+    @endscript
 </div>
