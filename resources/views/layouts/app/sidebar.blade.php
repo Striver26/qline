@@ -83,9 +83,9 @@
                         :current="request()->routeIs('business.feedback')" wire:navigate>
                         {{ __('Feedback') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="computer-desktop" :href="route('business.counters')"
-                        :current="request()->routeIs('business.counters')" wire:navigate>
-                        {{ __('Counters') }}
+                    <flux:sidebar.item icon="computer-desktop" :href="route('business.service-points')"
+                        :current="request()->routeIs('business.service-points')" wire:navigate>
+                        {{ __('Service Points') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
@@ -187,6 +187,18 @@
     </flux:header>
 
     {{ $slot }}
+
+    @if(session()->has('impersonated_by'))
+        <div class="fixed bottom-6 right-6 z-[100] bg-brand-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-5 border border-brand-500/50">
+            <div class="flex flex-col">
+                <span class="text-[0.65rem] uppercase tracking-wider font-bold text-brand-200">Impersonating</span>
+                <span class="text-sm font-semibold">{{ auth()->user()->name }}</span>
+            </div>
+            <a href="{{ route('impersonate.leave') }}" class="px-3 py-1.5 bg-white text-brand-700 rounded-lg text-xs font-bold hover:bg-brand-50 transition-colors shadow-sm whitespace-nowrap">
+                Leave
+            </a>
+        </div>
+    @endif
 
     @fluxScripts
 </body>

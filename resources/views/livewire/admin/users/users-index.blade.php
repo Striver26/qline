@@ -52,6 +52,7 @@
                             <flux:dropdown align="end" position="bottom">
                                 <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="bottom top" />
                                 <flux:menu>
+                                    <flux:menu.item href="{{ route('admin.impersonate', $user->id) }}" icon="eye">Impersonate</flux:menu.item>
                                     <flux:menu.item wire:click="editUser({{$user->id}})" icon="pencil">Edit Role</flux:menu.item>
                                     <flux:menu.item wire:click="confirmDelete({{$user->id}})" variant="danger" icon="trash">Delete User</flux:menu.item>
                                 </flux:menu>

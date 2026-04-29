@@ -1,10 +1,12 @@
 <?php
 
 use App\Models\Tenant\Business;
+use App\Models\Tenant\ServicePoint;
 use App\Models\Tenant\Subscription;
 use App\Models\Queue\QueueEntry;
 use App\Services\Queue\QueueService;
 use App\Enums\QueueStatus;
+use App\Enums\TableStatus;
 
 beforeEach(function () {
     $this->business = Business::create([
@@ -115,6 +117,41 @@ it('returns null when no tickets are waiting', function () {
     expect($result)->toBeNull();
 });
 
+it('assigns a waiting ticket to a servicePoint and marks the servicePoint occupied', function () {
+    $entry = $this->service->join($this->business, '60111111111');
+    $servicePoint = ServicePoint::create([
+        'business_id' => $this->business->id,
+        'name' => 'Table 1',
+        'status' => TableStatus::FREE->value,
+    ]);
+
+    $assigned = $this->service->assignToServicePoint($entry->id, $servicePoint->id);
+
+    expect($assigned->status)->toBe(QueueStatus::CALLED->value);
+    expect($assigned->service_point_id)->toBe($servicePoint->id);
+    expect($assigned->called_at)->not->toBeNull();
+
+    $servicePoint->refresh();
+    expect($servicePoint->status)->toBe(TableStatus::OCCUPIED->value);
+});
+
+it('calls a specific waiting ticket to a selected servicePoint', function () {
+    config()->set('qline.tiers.daily.counters', true);
+
+    $servicePoint = ServicePoint::create([
+        'business_id' => $this->business->id,
+        'name' => 'Reception',
+        'is_active' => true,
+    ]);
+
+    $entry = $this->service->join($this->business, '60111111111');
+
+    $called = $this->service->callEntry($this->business, $entry->id, $servicePoint->id);
+
+    expect($called->status)->toBe(QueueStatus::CALLED->value);
+    expect($called->service_point_id)->toBe($servicePoint->id);
+});
+
 // --- Mark Serving ---
 
 it('marks a called ticket as serving', function () {
@@ -142,6 +179,21 @@ it('marks a ticket as completed', function () {
     expect($entry->status)->toBe(QueueStatus::COMPLETED->value);
     expect($entry->completed_at)->not->toBeNull();
     expect($entry->position)->toBe(0);
+});
+
+it('frees an occupied servicePoint when a servicePoint-assigned ticket is completed', function () {
+    $entry = $this->service->join($this->business, '60111111111');
+    $servicePoint = ServicePoint::create([
+        'business_id' => $this->business->id,
+        'name' => 'Table 4',
+        'status' => TableStatus::FREE->value,
+    ]);
+
+    $this->service->assignToServicePoint($entry->id, $servicePoint->id);
+    $this->service->markDone($entry->refresh());
+
+    $servicePoint->refresh();
+    expect($servicePoint->status)->toBe(TableStatus::FREE->value);
 });
 
 // --- Skip ---
@@ -177,7 +229,7 @@ it('cancels a waiting ticket', function () {
 
 // --- Close Queue ---
 
-it('cancels all active tickets and resets counters when queue is closed', function () {
+it('cancels all active tickets and resets servicePoints when queue is closed', function () {
     $e1 = $this->service->join($this->business, '60111111111'); // waiting
     $e2 = $this->service->addManual($this->business);           // waiting
 
@@ -203,7 +255,7 @@ it('cancels all active tickets and resets counters when queue is closed', functi
 
 // --- Open Queue ---
 
-it('opens queue and resets daily counters', function () {
+it('opens queue and resets daily servicePoints', function () {
     $this->business->update([
         'queue_status' => 'closed',
         'current_number' => 50,

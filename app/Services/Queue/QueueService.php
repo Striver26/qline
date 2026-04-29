@@ -2,24 +2,175 @@
 
 namespace App\Services\Queue;
 
-use App\Models\Tenant\Business;
-use App\Models\Queue\QueueEntry;
-use App\Models\Marketing\LoyaltyVisit;
+use App\Enums\BusinessQueueStatus;
 use App\Enums\QueueStatus;
+use App\Enums\TableStatus;
+use App\Events\QueueUpdated;
+use App\Events\TicketCompleted;
+use App\Events\TicketJoined;
 use App\Events\TicketStatusUpdated;
-use Illuminate\Support\Str;
+use App\Models\Queue\QueueEntry;
+use App\Models\Tenant\Business;
+use App\Models\Tenant\ServicePoint;
+use App\Services\WhatsApp\WhatsAppService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Exception;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 class QueueService
 {
-    public function openQueue(Business $business)
+    private const WAITING_PREVIEW_LIMIT = 50;
+
+    public function getCommandCenterSnapshot(Business $business): array
     {
-        // Issue #19: Require active subscription before opening queue
-        $sub = $business->subscription;
-        if (!$sub || $sub->status !== 'active') {
-            throw new Exception("An active subscription is required to open the queue.");
-        }
+        $business = Business::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'tv_token',
+                'queue_status',
+                'pause_reason',
+                'timezone',
+            ])
+            ->with('subscription:id,business_id,type,status,expires_at')
+            ->findOrFail($business->getKey());
+
+        $waitingCount = QueueEntry::query()
+            ->forBusiness($business->id)
+            ->waiting()
+            ->count();
+
+        $completedToday = QueueEntry::query()
+            ->forBusiness($business->id)
+            ->where('status', QueueStatus::COMPLETED->value)
+            ->whereDate('completed_at', now()->toDateString())
+            ->count();
+
+        $waitingEntries = QueueEntry::query()
+            ->select([
+                'id',
+                'business_id',
+                'wa_id',
+                'ticket_code',
+                'status',
+                'source',
+                'created_at',
+            ])
+            ->forBusiness($business->id)
+            ->waiting()
+            ->orderBy('id')
+            ->limit(self::WAITING_PREVIEW_LIMIT)
+            ->get();
+
+        $activeEntries = QueueEntry::query()
+            ->select([
+                'id',
+                'business_id',
+                'wa_id',
+                'ticket_code',
+                'status',
+                'source',
+                'service_point_id',
+                'called_at',
+                'served_at',
+            ])
+            ->forBusiness($business->id)
+            ->active()
+            ->with([
+                'servicePoint:id,name,status,is_active',
+            ])
+            ->orderByDesc('called_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $servicePoints = ServicePoint::query()
+            ->select(['id', 'business_id', 'name', 'status', 'is_active'])
+            ->where('business_id', $business->id)
+            ->orderBy('name')
+            ->get();
+
+        $averageServiceMinutes = $this->getAverageServiceMinutes($business->id);
+        $activeByServicePoint = $activeEntries
+            ->filter(fn(QueueEntry $entry) => $entry->service_point_id !== null)
+            ->keyBy('service_point_id');
+
+        $formattedWaitingEntries = $waitingEntries
+            ->values()
+            ->map(function (QueueEntry $entry, int $index) use ($averageServiceMinutes): array {
+                return [
+                    'id' => $entry->id,
+                    'ticket_code' => $entry->ticket_code,
+                    'customer_label' => $entry->wa_id ?: 'Anonymous',
+                    'source_label' => $entry->source === 'whatsapp' ? 'WhatsApp' : 'Anonymous',
+                    'queue_position' => $index + 1,
+                    'estimated_wait_mins' => $index * $averageServiceMinutes,
+                    'created_human' => $entry->created_at?->diffForHumans(),
+                    'created_at' => $entry->created_at?->toIso8601String(),
+                    'is_next' => $index === 0,
+                ];
+            })
+            ->all();
+
+        $formattedActiveEntries = $activeEntries
+            ->values()
+            ->map(fn(QueueEntry $entry): array => $this->formatActiveEntry($entry))
+            ->all();
+
+        $formattedServicePoints = $servicePoints
+            ->values()
+            ->map(function (ServicePoint $servicePoint) use ($activeByServicePoint): array {
+                $currentEntry = $activeByServicePoint->get($servicePoint->id);
+                $isFree = $servicePoint->status === TableStatus::FREE->value && !$currentEntry;
+
+                return [
+                    'id' => $servicePoint->id,
+                    'name' => $servicePoint->name,
+                    'status' => $servicePoint->status,
+                    'is_active' => $servicePoint->is_active,
+                    'is_busy' => (bool) $currentEntry,
+                    'is_free' => $isFree,
+                    'active_ticket' => $currentEntry ? [
+                        'id' => $currentEntry->id,
+                        'ticket_code' => $currentEntry->ticket_code,
+                        'status_label' => QueueStatus::tryFrom($currentEntry->status)?->getLabel() ?? Str::headline($currentEntry->status),
+                    ] : null,
+                    'active_ticket_code' => $currentEntry?->ticket_code,
+                ];
+            })
+            ->all();
+
+        return [
+            'business' => [
+                'id' => $business->id,
+                'name' => $business->name ?: 'Your Business',
+                'slug' => $business->slug,
+                'tv_token' => $business->tv_token,
+                'queue_status' => $business->queue_status,
+                'pause_reason' => $business->pause_reason,
+                'subscription_type' => $business->subscription?->type?->value ?? null,
+                'can_use_servicePoints' => $this->canUseServicePoints($business),
+            ],
+            'metrics' => [
+                'waiting_count' => $waitingCount,
+                'active_count' => count($formattedActiveEntries),
+                'served_today' => $completedToday,
+                'free_table_count' => collect($formattedServicePoints)->where('is_free', true)->count(),
+                'occupied_table_count' => collect($formattedServicePoints)->where('is_free', false)->count(),
+                'waiting_hidden_count' => max(0, $waitingCount - count($formattedWaitingEntries)),
+            ],
+            'next_entry' => $formattedWaitingEntries[0] ?? null,
+            'waiting_entries' => $formattedWaitingEntries,
+            'active_entries' => $formattedActiveEntries,
+            'servicePoints' => $formattedServicePoints,
+        ];
+    }
+
+    public function openQueue(Business $business): void
+    {
+        $this->ensureActiveSubscription($business);
 
         $today = now()->startOfDay();
         $lastReset = $business->last_reset_at ? $business->last_reset_at->startOfDay() : null;
@@ -33,137 +184,145 @@ class QueueService
         }
 
         $business->update([
-            'queue_status' => \App\Enums\BusinessQueueStatus::OPEN->value,
-            'pause_reason' => null
-        ]);
-    }
-
-    public function pauseQueue(Business $business, $reason = null)
-    {
-        $business->update([
-            'queue_status' => \App\Enums\BusinessQueueStatus::PAUSED->value,
-            'pause_reason' => $reason
-        ]);
-    }
-
-    public function closeQueue(Business $business)
-    {
-        $activeEntries = QueueEntry::where('business_id', $business->id)
-            ->whereIn('status', [
-                QueueStatus::WAITING->value,
-                QueueStatus::CALLED->value,
-                QueueStatus::SERVING->value
-            ])
-            ->get();
-
-        foreach ($activeEntries as $entry) {
-            $entry->update([
-                'status' => QueueStatus::CANCELLED->value,
-                'position' => 0
-            ]);
-            
-            event(new TicketStatusUpdated($entry, $business));
-        }
-
-        $business->update([
-            'queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value,
+            'queue_status' => BusinessQueueStatus::OPEN->value,
             'pause_reason' => null,
         ]);
+
+        $this->broadcastQueueMutation($business->id, 'openQueue');
     }
 
-    public function join(Business $business, $waId)
+    public function pauseQueue(Business $business, ?string $reason = null): void
+    {
+        $business->update([
+            'queue_status' => BusinessQueueStatus::PAUSED->value,
+            'pause_reason' => $reason,
+        ]);
+
+        $this->broadcastQueueMutation($business->id, 'pauseQueue');
+    }
+
+    public function closeQueue(Business $business): void
+    {
+        DB::transaction(function () use ($business): void {
+            $lockedBusiness = $this->lockBusiness($business);
+
+            $activeEntries = QueueEntry::query()
+                ->forBusiness($lockedBusiness->id)
+                ->whereIn('status', [
+                    QueueStatus::WAITING->value,
+                    QueueStatus::CALLED->value,
+                    QueueStatus::SERVING->value,
+                ])
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($activeEntries as $entry) {
+                if ($entry->service_point_id) {
+                    $this->releaseServicePointById($entry->service_point_id);
+                }
+
+                $entry->update([
+                    'status' => QueueStatus::CANCELLED->value,
+                    'position' => 0,
+                ]);
+
+                event(new TicketStatusUpdated($entry->fresh(), $lockedBusiness));
+            }
+
+            ServicePoint::query()
+                ->where('business_id', $lockedBusiness->id)
+                ->update(['status' => TableStatus::FREE->value]);
+
+            $lockedBusiness->update([
+                'queue_status' => BusinessQueueStatus::CLOSED->value,
+                'pause_reason' => null,
+            ]);
+
+            $this->broadcastQueueMutation($lockedBusiness->id, 'closeQueue');
+        });
+    }
+
+    public function join(Business $business, string $waId): QueueEntry
     {
         $waId = $this->normalizePhone($waId);
 
         $this->ensureActiveSubscription($business);
 
-        return DB::transaction(function () use ($business, $waId) {
-            $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
-            
-            if ($lockedBusiness->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
-                throw new Exception("The queue is currently closed.");
-            }
+        return DB::transaction(function () use ($business, $waId): QueueEntry {
+            $lockedBusiness = $this->lockBusiness($business);
 
-            if ($lockedBusiness->daily_limit > 0 && $lockedBusiness->entries_today >= $lockedBusiness->daily_limit) {
-                throw new Exception("Queue limit reached for today ({$lockedBusiness->daily_limit} tickets).");
-            }
+            $this->ensureQueueOpen($lockedBusiness);
+            $this->ensureDailyLimitNotReached($lockedBusiness);
 
-            $todayCount = QueueEntry::where('business_id', $lockedBusiness->id)
+            $todayCount = QueueEntry::query()
+                ->forBusiness($lockedBusiness->id)
                 ->where('wa_id', $waId)
                 ->whereDate('created_at', now()->toDateString())
                 ->count();
 
             if ($todayCount >= 3) {
-                throw new Exception("You have reached the maximum queue limit of 3 tickets per day.");
+                throw new RuntimeException('You have reached the maximum queue limit of 3 tickets per day.');
             }
 
-            $lockedBusiness->increment('current_number');
-            $lockedBusiness->increment('entries_today');
-
-            $number = $lockedBusiness->current_number;
-            $code = $lockedBusiness->queue_prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
-
-            $entry = QueueEntry::create([
-                'business_id' => $lockedBusiness->id,
+            $entry = $this->createEntry($lockedBusiness, [
                 'wa_id' => $waId,
-                'ticket_number' => $number,
-                'ticket_code' => $code,
-                'status' => QueueStatus::WAITING->value,
                 'source' => 'whatsapp',
-                'cancel_token' => Str::random(32),
-                'position' => 0
             ]);
 
-            event(new \App\Events\TicketJoined($entry, $lockedBusiness));
+            event(new TicketJoined($entry, $lockedBusiness));
+            $this->broadcastQueueMutation($lockedBusiness->id, 'join', $entry->id);
 
             return $entry;
         });
     }
 
-    public function addManual(Business $business)
+    public function addManual(Business $business): QueueEntry
     {
         $this->ensureActiveSubscription($business);
 
-        return DB::transaction(function () use ($business) {
-            $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
-            
-            if ($lockedBusiness->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
-                throw new Exception("The queue is currently closed.");
-            }
+        return DB::transaction(function () use ($business): QueueEntry {
+            $lockedBusiness = $this->lockBusiness($business);
 
-            if ($lockedBusiness->daily_limit > 0 && $lockedBusiness->entries_today >= $lockedBusiness->daily_limit) {
-                throw new Exception("Queue limit reached for today ({$lockedBusiness->daily_limit} tickets).");
-            }
+            $this->ensureQueueOpen($lockedBusiness);
+            $this->ensureDailyLimitNotReached($lockedBusiness);
 
-            $lockedBusiness->increment('current_number');
-            $lockedBusiness->increment('entries_today');
-
-            $number = $lockedBusiness->current_number;
-            $code = $lockedBusiness->queue_prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
-
-            return QueueEntry::create([
-                'business_id' => $lockedBusiness->id,
+            $entry = $this->createEntry($lockedBusiness, [
                 'wa_id' => null,
-                'ticket_number' => $number,
-                'ticket_code' => $code,
-                'status' => QueueStatus::WAITING->value,
                 'source' => 'anonymous',
-                'cancel_token' => Str::random(32),
-                'position' => 0
             ]);
+
+            $this->broadcastQueueMutation($lockedBusiness->id, 'addManual', $entry->id);
+
+            return $entry;
         });
     }
 
-    public function callNext(Business $business, $counterId = null)
+    public function getNextEntry(Business|int $business): ?QueueEntry
+    {
+        $businessId = $business instanceof Business ? $business->id : $business;
+
+        return QueueEntry::query()
+            ->forBusiness($businessId)
+            ->waiting()
+            ->orderBy('id')
+            ->first();
+    }
+
+    public function callNext(Business $business, ?int $servicePointId = null): ?QueueEntry
     {
         $this->ensureActiveSubscription($business);
 
-        return DB::transaction(function () use ($business, $counterId) {
-            $lockedBusiness = Business::where('id', $business->id)->lockForUpdate()->first();
+        return DB::transaction(function () use ($business, $servicePointId): ?QueueEntry {
+            $lockedBusiness = $this->lockBusiness($business);
 
-            $nextEntry = QueueEntry::where('business_id', $lockedBusiness->id)
-                ->where('status', QueueStatus::WAITING->value)
-                ->orderBy('id', 'asc')
+            $this->ensureQueueOpen($lockedBusiness);
+
+            $servicePoint = $this->lockServicePointIfNeeded($lockedBusiness, $servicePointId, requireAvailable: true);
+
+            $nextEntry = QueueEntry::query()
+                ->forBusiness($lockedBusiness->id)
+                ->waiting()
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->first();
 
@@ -171,198 +330,569 @@ class QueueService
                 return null;
             }
 
-            // Enforce tier entitlement for counters
-            $tier = $business->subscription?->type->value ?? $business->subscription?->type;
-            $canUseCounters = config("qline.tiers.{$tier}.counters", false);
-            
-            if (!$canUseCounters) {
-                $counterId = null;
-            }
+            $entry = $this->activateEntry(
+                business: $lockedBusiness,
+                entry: $nextEntry,
+                servicePoint: $servicePoint,
+                action: 'callNext',
+            );
 
-            $nextEntry->update([
-                'status' => QueueStatus::CALLED->value,
-                'counter_id' => $counterId,
-                'processed_by_user_id' => auth()->id(),
-                'called_at' => now(),
-                'position' => 0
-            ]);
+            $this->notifyUpcomingEntry($lockedBusiness);
 
-            event(new TicketStatusUpdated($nextEntry, $business));
-
-            // Issue #29: Pre-turn notification
-            $notifyTurnsBefore = $lockedBusiness->notify_turns_before ?? 3;
-            if ($notifyTurnsBefore > 0) {
-                $upcomingEntry = QueueEntry::where('business_id', $lockedBusiness->id)
-                    ->where('status', QueueStatus::WAITING->value)
-                    ->orderBy('id', 'asc')
-                    ->offset($notifyTurnsBefore - 1)
-                    ->first();
-
-                if ($upcomingEntry && $upcomingEntry->wa_id) {
-                    app(\App\Services\WhatsApp\WhatsAppService::class)->sendText(
-                        $upcomingEntry->wa_id,
-                        "Your turn at {$lockedBusiness->name} is coming soon! You are now number {$notifyTurnsBefore} in line. Please get ready.",
-                        $lockedBusiness->id,
-                        $upcomingEntry->id
-                    );
-                }
-            }
-
-            return $nextEntry;
+            return $entry;
         });
     }
 
-    public function markServing(QueueEntry $entry)
+    public function callEntry(Business $business, int $entryId, ?int $servicePointId = null): QueueEntry
     {
-        if ($entry->status !== QueueStatus::CALLED->value) {
-            throw new Exception("Only called tickets can be marked as serving.");
-        }
+        $this->ensureActiveSubscription($business);
 
-        $entry->update([
-            'status' => QueueStatus::SERVING->value,
-            'served_at' => now()
-        ]);
+        return DB::transaction(function () use ($business, $entryId, $servicePointId): QueueEntry {
+            $lockedBusiness = $this->lockBusiness($business);
 
-        // Issue #13: Broadcast serving status to clients
-        event(new TicketStatusUpdated($entry, $entry->business));
-    }
+            $this->ensureQueueOpen($lockedBusiness);
 
-    public function markDone(QueueEntry $entry)
-    {
-        if (!in_array($entry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value])) {
-            throw new Exception("Only active tickets can be completed.");
-        }
+            $servicePoint = $this->lockServicePointIfNeeded($lockedBusiness, $servicePointId, requireAvailable: true);
 
-        $entry->update([
-            'status' => QueueStatus::COMPLETED->value,
-            'completed_at' => now(),
-            'processed_by_user_id' => auth()->id(),
-            'position' => 0
-        ]);
+            $entry = QueueEntry::query()
+                ->forBusiness($lockedBusiness->id)
+                ->waiting()
+                ->whereKey($entryId)
+                ->lockForUpdate()
+                ->first();
 
-        if ($entry->wa_id) {
-            event(new \App\Events\TicketCompleted($entry));
-        }
-
-        // Issue #13: Broadcast completed status to clients
-        event(new TicketStatusUpdated($entry, $entry->business));
-    }
-
-    public function skip(QueueEntry $entry)
-    {
-        if (!in_array($entry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value])) {
-            throw new Exception("Only active tickets can be skipped.");
-        }
-
-        $entry->update([
-            'status' => QueueStatus::SKIPPED->value,
-            'processed_by_user_id' => auth()->id(),
-            'position' => 0
-        ]);
-        
-        event(new TicketStatusUpdated($entry, $entry->business));
-    }
-
-    public function cancel(QueueEntry $entry)
-    {
-        if (!in_array($entry->status, [QueueStatus::WAITING->value, QueueStatus::CALLED->value])) {
-            throw new Exception("Only waiting or called tickets can be cancelled.");
-        }
-
-        $entry->update([
-            'status' => QueueStatus::CANCELLED->value,
-            'processed_by_user_id' => auth()->id(),
-            'position' => 0
-        ]);
-        
-        event(new TicketStatusUpdated($entry, $entry->business));
-    }
-
-    public function rejoin(QueueEntry $entry)
-    {
-        if (!in_array($entry->status, [QueueStatus::SKIPPED->value, QueueStatus::CANCELLED->value])) {
-            throw new Exception("Only skipped or cancelled tickets can be rejoined.");
-        }
-
-        return DB::transaction(function () use ($entry) {
-            $lockedBusiness = Business::where('id', $entry->business_id)->lockForUpdate()->first();
-            
-            if ($lockedBusiness->queue_status !== \App\Enums\BusinessQueueStatus::OPEN->value) {
-                throw new Exception("The queue is currently closed.");
+            if (!$entry) {
+                throw new RuntimeException('Only waiting tickets can be called to a service point.');
             }
 
-            $entry->update([
+            $activatedEntry = $this->activateEntry(
+                business: $lockedBusiness,
+                entry: $entry,
+                servicePoint: $servicePoint,
+                action: 'callEntry',
+            );
+
+            $this->notifyUpcomingEntry($lockedBusiness);
+
+            return $activatedEntry;
+        });
+    }
+
+    public function assignToServicePoint(int $entryId, int $servicePointId): QueueEntry
+    {
+        return DB::transaction(function () use ($entryId, $servicePointId): QueueEntry {
+            $entry = QueueEntry::query()
+                ->whereKey($entryId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$entry) {
+                throw new ModelNotFoundException('Queue entry not found.');
+            }
+
+            $business = $this->lockBusiness($entry->business_id);
+
+            $this->ensureActiveSubscription($business);
+            $this->ensureQueueOpen($business);
+
+            if ($entry->status !== QueueStatus::WAITING->value) {
+                throw new RuntimeException('Only waiting tickets can be assigned to a service point.');
+            }
+
+            $servicePoint = ServicePoint::query()
+                ->where('business_id', $business->id)
+                ->whereKey($servicePointId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$servicePoint) {
+                throw new RuntimeException('Selected service point could not be found.');
+            }
+
+            $servicePointIsBusy = QueueEntry::query()
+                ->forBusiness($business->id)
+                ->active()
+                ->where('service_point_id', $servicePoint->id)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($servicePointIsBusy) {
+                throw new RuntimeException("{$servicePoint->name} is already handling another ticket.");
+            }
+
+            $activatedEntry = $this->activateEntry(
+                business: $business,
+                entry: $entry,
+                servicePoint: $servicePoint,
+                action: 'assignToServicePoint',
+            );
+
+            $this->notifyUpcomingEntry($business);
+
+            return $activatedEntry;
+        });
+    }
+
+    public function markServing(QueueEntry $entry): QueueEntry
+    {
+        return DB::transaction(function () use ($entry): QueueEntry {
+            $lockedEntry = $this->lockEntry($entry);
+
+            if ($lockedEntry->status !== QueueStatus::CALLED->value) {
+                throw new RuntimeException('Only called tickets can be marked as serving.');
+            }
+
+            $lockedEntry->update([
+                'status' => QueueStatus::SERVING->value,
+                'served_at' => now(),
+            ]);
+
+            $business = Business::query()->findOrFail($lockedEntry->business_id);
+
+            event(new TicketStatusUpdated($lockedEntry->fresh(), $business));
+            $this->broadcastQueueMutation(
+                $business->id,
+                'markServing',
+                $lockedEntry->id,
+                $lockedEntry->service_point_id,
+            );
+
+            return $lockedEntry->fresh(['servicePoint:id,name,status,is_active']);
+        });
+    }
+
+    public function markDone(int|QueueEntry $entry): QueueEntry
+    {
+        return DB::transaction(function () use ($entry): QueueEntry {
+            $lockedEntry = $this->lockEntry($entry);
+
+            if (!in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+                throw new RuntimeException('Only active tickets can be completed.');
+            }
+
+            if ($lockedEntry->service_point_id) {
+                $this->releaseServicePointById($lockedEntry->service_point_id);
+            }
+
+            $lockedEntry->update([
+                'status' => QueueStatus::COMPLETED->value,
+                'completed_at' => now(),
+                'processed_by_user_id' => auth()->id(),
+                'position' => 0,
+            ]);
+
+            $business = Business::query()->findOrFail($lockedEntry->business_id);
+
+            if ($lockedEntry->wa_id) {
+                event(new TicketCompleted($lockedEntry->fresh()));
+            }
+
+            event(new TicketStatusUpdated($lockedEntry->fresh(), $business));
+            $this->broadcastQueueMutation(
+                $business->id,
+                'markDone',
+                $lockedEntry->id,
+                $lockedEntry->service_point_id,
+            );
+
+            Cache::forget($this->averageWaitCacheKey($business->id));
+
+            return $lockedEntry->fresh(['servicePoint:id,name,status,is_active']);
+        });
+    }
+
+    public function recallEntry(int|QueueEntry $entry): QueueEntry
+    {
+        $lockedEntry = $this->lockEntry($entry);
+
+        if (!in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+            throw new RuntimeException('Only active tickets can be recalled.');
+        }
+
+        $business = Business::query()->findOrFail($lockedEntry->business_id);
+
+        // Re-fire event to trigger sound/WhatsApp/TV
+        event(new TicketStatusUpdated($lockedEntry, $business));
+        
+        $this->broadcastQueueMutation(
+            $business->id,
+            'recall',
+            $lockedEntry->id,
+            $lockedEntry->service_point_id,
+        );
+
+        return $lockedEntry;
+    }
+
+    public function skip(int|QueueEntry $entry): QueueEntry
+    {
+        return DB::transaction(function () use ($entry): QueueEntry {
+            $lockedEntry = $this->lockEntry($entry);
+
+            if (!in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+                throw new RuntimeException('Only active tickets can be skipped.');
+            }
+
+            if ($lockedEntry->service_point_id) {
+                $this->releaseServicePointById($lockedEntry->service_point_id);
+            }
+
+            $lockedEntry->update([
+                'status' => QueueStatus::SKIPPED->value,
+                'processed_by_user_id' => auth()->id(),
+                'position' => 0,
+            ]);
+
+            $business = Business::query()->findOrFail($lockedEntry->business_id);
+
+            event(new TicketStatusUpdated($lockedEntry->fresh(), $business));
+            $this->broadcastQueueMutation(
+                $business->id,
+                'skip',
+                $lockedEntry->id,
+                $lockedEntry->service_point_id,
+            );
+
+            return $lockedEntry->fresh(['servicePoint:id,name,status,is_active']);
+        });
+    }
+
+    public function cancel(int|QueueEntry $entry): QueueEntry
+    {
+        return DB::transaction(function () use ($entry): QueueEntry {
+            $lockedEntry = $this->lockEntry($entry);
+
+            if (!in_array($lockedEntry->status, [QueueStatus::WAITING->value, QueueStatus::CALLED->value], true)) {
+                throw new RuntimeException('Only waiting or called tickets can be cancelled.');
+            }
+
+            if ($lockedEntry->service_point_id) {
+                $this->releaseServicePointById($lockedEntry->service_point_id);
+            }
+
+            $lockedEntry->update([
+                'status' => QueueStatus::CANCELLED->value,
+                'processed_by_user_id' => auth()->id(),
+                'position' => 0,
+            ]);
+
+            $business = Business::query()->findOrFail($lockedEntry->business_id);
+
+            event(new TicketStatusUpdated($lockedEntry->fresh(), $business));
+            $this->broadcastQueueMutation(
+                $business->id,
+                'cancel',
+                $lockedEntry->id,
+                $lockedEntry->service_point_id,
+            );
+
+            return $lockedEntry->fresh(['servicePoint:id,name,status,is_active']);
+        });
+    }
+
+    public function rejoin(int|QueueEntry $entry): QueueEntry
+    {
+        return DB::transaction(function () use ($entry): QueueEntry {
+            $lockedEntry = $this->lockEntry($entry);
+
+            if (!in_array($lockedEntry->status, [QueueStatus::SKIPPED->value, QueueStatus::CANCELLED->value], true)) {
+                throw new RuntimeException('Only skipped or cancelled tickets can be rejoined.');
+            }
+
+            $business = $this->lockBusiness($lockedEntry->business_id);
+
+            $this->ensureQueueOpen($business);
+
+            if ($lockedEntry->service_point_id) {
+                $this->releaseServicePointById($lockedEntry->service_point_id);
+            }
+
+            $lockedEntry->update([
                 'status' => QueueStatus::WAITING->value,
                 'position' => 0,
-                'counter_id' => null,
+                'service_point_id' => null,
                 'processed_by_user_id' => null,
                 'called_at' => null,
                 'served_at' => null,
                 'completed_at' => null,
             ]);
 
-            event(new TicketStatusUpdated($entry, $lockedBusiness));
+            event(new TicketStatusUpdated($lockedEntry->fresh(), $business));
+            $this->broadcastQueueMutation($business->id, 'rejoin', $lockedEntry->id);
 
-            return $entry;
+            return $lockedEntry->fresh(['servicePoint:id,name,status,is_active']);
         });
     }
 
-    public function getPositionInfo(QueueEntry $entry)
+    public function getPositionInfo(QueueEntry $entry): array
     {
         if ($entry->status !== QueueStatus::WAITING->value) {
             return [
                 'position' => 0,
                 'ahead' => 0,
-                'estimated_wait_mins' => 0
+                'estimated_wait_mins' => 0,
             ];
         }
 
-        $ahead = QueueEntry::where('business_id', $entry->business_id)
-            ->where('status', QueueStatus::WAITING->value)
+        $ahead = QueueEntry::query()
+            ->forBusiness($entry->business_id)
+            ->waiting()
             ->where('id', '<', $entry->id)
             ->count();
-
-        // Calculate dynamic wait time rolling average (last 10 completed)
-        $avgWaitSeconds = QueueEntry::where('business_id', $entry->business_id)
-            ->where('status', QueueStatus::COMPLETED->value)
-            ->whereNotNull('called_at')
-            ->whereNotNull('completed_at')
-            ->orderBy('id', 'desc')
-            ->limit(10)
-            ->get()
-            ->avg(function ($completedEntry) {
-                return $completedEntry->completed_at->diffInSeconds($completedEntry->called_at);
-            });
-
-        // Fallback to 5 mins if no data
-        $avgWaitMins = $avgWaitSeconds ? ceil($avgWaitSeconds / 60) : 5;
 
         return [
             'position' => $ahead + 1,
             'ahead' => $ahead,
-            'estimated_wait_mins' => $ahead * $avgWaitMins
+            'estimated_wait_mins' => $ahead * $this->getAverageServiceMinutes($entry->business_id),
         ];
+    }
+
+    private function activateEntry(
+        Business $business,
+        QueueEntry $entry,
+        ?ServicePoint $servicePoint,
+        string $action,
+    ): QueueEntry {
+        if ($servicePoint) {
+            $servicePoint->update(['status' => TableStatus::OCCUPIED->value]);
+        }
+
+        $entry->update([
+            'status' => QueueStatus::CALLED->value,
+            'service_point_id' => $servicePoint?->id,
+            'processed_by_user_id' => auth()->id(),
+            'called_at' => now(),
+            'position' => 0,
+        ]);
+
+        $freshEntry = $entry->fresh(['servicePoint:id,name,status,is_active']);
+
+        event(new TicketStatusUpdated($freshEntry, $business));
+        $this->broadcastQueueMutation(
+            $business->id,
+            $action,
+            $freshEntry->id,
+            $freshEntry->service_point_id,
+        );
+
+        return $freshEntry;
+    }
+
+    private function createEntry(Business $business, array $attributes): QueueEntry
+    {
+        $ticketNumber = $business->current_number + 1;
+        $ticketCode = $business->queue_prefix . str_pad((string) $ticketNumber, 3, '0', STR_PAD_LEFT);
+
+        $business->update([
+            'current_number' => $ticketNumber,
+            'entries_today' => $business->entries_today + 1,
+        ]);
+
+        return QueueEntry::query()->create([
+            'business_id' => $business->id,
+            'wa_id' => $attributes['wa_id'],
+            'ticket_number' => $ticketNumber,
+            'ticket_code' => $ticketCode,
+            'status' => QueueStatus::WAITING->value,
+            'source' => $attributes['source'],
+            'cancel_token' => Str::random(32),
+            'position' => 0,
+        ]);
     }
 
     private function ensureActiveSubscription(Business $business): void
     {
-        $sub = $business->subscription;
-        if (!$sub || $sub->status !== 'active' || ($sub->expires_at && $sub->expires_at->isPast())) {
-            // Force closure on detection of invalid subscription
+        $subscription = $business->loadMissing('subscription')->subscription;
+
+        if (
+            !$subscription
+            || $subscription->status !== 'active'
+            || ($subscription->expires_at && $subscription->expires_at->isPast())
+        ) {
             $this->closeQueue($business);
-            
-            throw new Exception("The business has no active subscription.");
+
+            throw new RuntimeException('The business has no active subscription.');
         }
     }
 
-    private function normalizePhone($phone): string
+    private function ensureQueueOpen(Business $business): void
     {
-        $digits = preg_replace('/\D/', '', $phone);
-        
+        if ($business->queue_status !== BusinessQueueStatus::OPEN->value) {
+            throw new RuntimeException('The queue is currently closed.');
+        }
+    }
+
+    private function ensureDailyLimitNotReached(Business $business): void
+    {
+        if ($business->daily_limit > 0 && $business->entries_today >= $business->daily_limit) {
+            throw new RuntimeException("Queue limit reached for today ({$business->daily_limit} tickets).");
+        }
+    }
+
+    private function notifyUpcomingEntry(Business $business): void
+    {
+        $notifyTurnsBefore = $business->notify_turns_before ?? 3;
+
+        if ($notifyTurnsBefore <= 0) {
+            return;
+        }
+
+        $upcomingEntry = QueueEntry::query()
+            ->forBusiness($business->id)
+            ->waiting()
+            ->orderBy('id')
+            ->offset($notifyTurnsBefore - 1)
+            ->first();
+
+        if (!$upcomingEntry || !$upcomingEntry->wa_id) {
+            return;
+        }
+
+        app(WhatsAppService::class)->sendText(
+            $upcomingEntry->wa_id,
+            "Your turn at {$business->name} is coming soon! You are now number {$notifyTurnsBefore} in line. Please get ready.",
+            $business->id,
+            $upcomingEntry->id,
+        );
+    }
+
+    private function getAverageServiceMinutes(int $businessId): int
+    {
+        return Cache::remember(
+            $this->averageWaitCacheKey($businessId),
+            now()->addMinute(),
+            function () use ($businessId): int {
+                $seconds = QueueEntry::query()
+                    ->select(['called_at', 'completed_at'])
+                    ->forBusiness($businessId)
+                    ->where('status', QueueStatus::COMPLETED->value)
+                    ->whereNotNull('called_at')
+                    ->whereNotNull('completed_at')
+                    ->orderByDesc('id')
+                    ->limit(25)
+                    ->get()
+                    ->avg(fn(QueueEntry $entry): int => $entry->completed_at->diffInSeconds($entry->called_at));
+
+                return $seconds ? max(1, (int) ceil($seconds / 60)) : 5;
+            },
+        );
+    }
+
+    private function averageWaitCacheKey(int $businessId): string
+    {
+        return "queue:{$businessId}:average-service-minutes";
+    }
+
+    private function canUseServicePoints(Business $business): bool
+    {
+        $tier = $business->loadMissing('subscription')->subscription?->type?->value;
+
+        if (!$tier) {
+            return false;
+        }
+
+        return (bool) config("qline.tiers.{$tier}.counters", false);
+    }
+
+    private function formatActiveEntry(QueueEntry $entry): array
+    {
+        return [
+            'id' => $entry->id,
+            'ticket_code' => $entry->ticket_code,
+            'customer_label' => $entry->wa_id ?: 'Anonymous',
+            'source_label' => $entry->source === 'whatsapp' ? 'WhatsApp' : 'Anonymous',
+            'status' => $entry->status,
+            'status_label' => QueueStatus::tryFrom($entry->status)?->getLabel() ?? Str::headline($entry->status),
+            'called_at' => $entry->called_at?->format('H:i'),
+            'called_human' => $entry->called_at?->diffForHumans(),
+            'service_point_label' => $entry->servicePoint?->name,
+            'service_point_type' => 'service_point',
+            'service_point_id' => $entry->service_point_id,
+        ];
+    }
+
+    private function broadcastQueueMutation(
+        int $businessId,
+        string $action,
+        ?int $entryId = null,
+        ?int $servicePointId = null,
+    ): void {
+        event(new QueueUpdated($businessId, $action, $entryId, $servicePointId));
+    }
+
+    private function lockBusiness(Business|int $business): Business
+    {
+        $businessId = $business instanceof Business ? $business->id : $business;
+
+        return Business::query()
+            ->with('subscription')
+            ->whereKey($businessId)
+            ->lockForUpdate()
+            ->firstOrFail();
+    }
+
+    private function lockEntry(int|QueueEntry $entry): QueueEntry
+    {
+        $entryId = $entry instanceof QueueEntry ? $entry->id : $entry;
+
+        return QueueEntry::query()
+            ->with(['servicePoint:id,name,status,is_active'])
+            ->whereKey($entryId)
+            ->lockForUpdate()
+            ->firstOrFail();
+    }
+
+    private function lockServicePointIfNeeded(Business $business, ?int $servicePointId, bool $requireAvailable): ?ServicePoint
+    {
+        if (!$servicePointId || !$this->canUseServicePoints($business)) {
+            return null;
+        }
+
+        $servicePoint = ServicePoint::query()
+            ->where('business_id', $business->id)
+            ->whereKey($servicePointId)
+            ->where('is_active', true)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$servicePoint) {
+            throw new RuntimeException('Selected service point is unavailable.');
+        }
+
+        if (!$requireAvailable) {
+            return $servicePoint;
+        }
+
+        $servicePointIsBusy = QueueEntry::query()
+            ->forBusiness($business->id)
+            ->active()
+            ->where('service_point_id', $servicePoint->id)
+            ->lockForUpdate()
+            ->exists();
+
+        if ($servicePointIsBusy) {
+            throw new RuntimeException("{$servicePoint->name} is already handling another ticket.");
+        }
+
+        return $servicePoint;
+    }
+
+    private function releaseServicePointById(int $servicePointId): void
+    {
+        ServicePoint::query()
+            ->whereKey($servicePointId)
+            ->lockForUpdate()
+            ->update(['status' => TableStatus::FREE->value]);
+    }
+
+    private function normalizePhone(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+
         if (str_starts_with($digits, '0')) {
             $digits = '60' . substr($digits, 1);
         }
-        
+
         return $digits;
     }
 }

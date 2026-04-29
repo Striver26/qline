@@ -2,15 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\BusinessQueueStatus;
+use App\Enums\QueueStatus;
+use App\Events\QueueUpdated;
+use App\Models\Queue\QueueEntry;
+use App\Models\Tenant\Business;
+use App\Services\Queue\QueueService;
+use Exception;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use App\Models\Queue\QueueEntry;
-use App\Models\Tenant\Business;
-use App\Enums\QueueStatus;
-use App\Enums\BusinessQueueStatus;
-use App\Services\Queue\QueueService;
-use Exception;
 
 #[Signature('queue:cleanup-stale')]
 #[Description('Clean up stale queues and close queues outside business hours.')]
@@ -30,12 +31,25 @@ class CleanupStaleQueues extends Command
      */
     private function markStaleTicketsAsNoShow(): void
     {
-        $staleCount = QueueEntry::where('status', QueueStatus::WAITING->value)
+        $staleEntries = QueueEntry::query()
+            ->select(['id', 'business_id'])
+            ->where('status', QueueStatus::WAITING->value)
             ->where('created_at', '<', now()->subHours(12))
+            ->get();
+
+        $staleCount = $staleEntries->count();
+
+        QueueEntry::query()
+            ->whereIn('id', $staleEntries->pluck('id'))
             ->update([
                 'status' => QueueStatus::NO_SHOW->value,
                 'position' => 0,
             ]);
+
+        $staleEntries
+            ->pluck('business_id')
+            ->unique()
+            ->each(fn (int $businessId) => event(new QueueUpdated($businessId, 'staleCleanup')));
 
         $this->info("Marked {$staleCount} stale ticket(s) as NO_SHOW.");
     }
@@ -74,14 +88,14 @@ class CleanupStaleQueues extends Command
 
         $hours = $business->business_hours;
 
-        if (!$hours || !isset($hours[$day])) {
+        if (! $hours || ! isset($hours[$day])) {
             return false; // Leave as is if no explicit hours are provided
         }
 
         $config = $hours[$day];
 
         // If explicitly marked as closed for the day
-        if (isset($config['is_open']) && !$config['is_open']) {
+        if (isset($config['is_open']) && ! $config['is_open']) {
             return true;
         }
 

@@ -2,6 +2,11 @@
 
 namespace App\Models\Tenant;
 
+use App\Models\Marketing\CustomerFeedback;
+use App\Models\Marketing\LoyaltyReward;
+use App\Models\Marketing\LoyaltyVisit;
+use App\Models\Queue\QueueEntry;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -52,41 +57,41 @@ class Business extends Model
 
     public function users(): HasMany
     {
-        return $this->hasMany(\App\Models\User::class);
+        return $this->hasMany(User::class);
     }
 
     public function subscription(): HasOne
     {
-        return $this->hasOne(\App\Models\Tenant\Subscription::class);
+        return $this->hasOne(Subscription::class);
     }
 
     public function payments(): HasMany
     {
-        return $this->hasMany(\App\Models\Tenant\Payment::class);
+        return $this->hasMany(Payment::class);
     }
 
     public function queueEntries(): HasMany
     {
-        return $this->hasMany(\App\Models\Queue\QueueEntry::class);
+        return $this->hasMany(QueueEntry::class);
     }
 
-    public function counters(): HasMany
+    public function servicePoints(): HasMany
     {
-        return $this->hasMany(\App\Models\Tenant\Counter::class);
+        return $this->hasMany(ServicePoint::class);
     }
 
     public function customerFeedbacks(): HasMany
     {
-        return $this->hasMany(\App\Models\Marketing\CustomerFeedback::class);
+        return $this->hasMany(CustomerFeedback::class);
     }
 
     public function loyaltyRewards(): HasMany
     {
-        return $this->hasMany(\App\Models\Marketing\LoyaltyReward::class);
+        return $this->hasMany(LoyaltyReward::class);
     }
 
     public function loyaltyVisits(): HasMany
     {
-        return $this->hasMany(\App\Models\Marketing\LoyaltyVisit::class);
+        return $this->hasMany(LoyaltyVisit::class);
     }
 }

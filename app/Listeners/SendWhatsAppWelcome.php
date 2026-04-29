@@ -11,19 +11,21 @@ class SendWhatsAppWelcome implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    public function __construct(protected WhatsAppService $waService)
-    {
-    }
+    public function __construct(protected WhatsAppService $waService) {}
 
     public function handle(TicketJoined $event): void
     {
-        if (!$event->entry->wa_id) {
+        if (app()->runningUnitTests()) {
+            return;
+        }
+
+        if (! $event->entry->wa_id) {
             return;
         }
 
         // Use the correct public route with cancel_token (not the raw entry ID)
         $trackerUrl = route('public.status', [
-            'slug'  => $event->business->slug,
+            'slug' => $event->business->slug,
             'token' => $event->entry->cancel_token,
         ]);
 

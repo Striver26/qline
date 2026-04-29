@@ -6,10 +6,10 @@
 @php
     $tag = $attributes->has('href') ? 'a' : 'div';
 @endphp
-
 <{{ $tag }} {{ $attributes->class(['brand-link group']) }}>
-    <span class="brand-mark {{ $sidebar ? 'h-10 w-10 text-base' : '' }}">
-        Q
+    <span
+        class=" {{ $sidebar ?: '' }}">
+        <img src="/favicon.svg" alt="Qline logo" class="h-10 w-10" />
     </span>
 
     <span class="min-w-0">

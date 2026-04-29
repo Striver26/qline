@@ -1,5 +1,4 @@
 <div
-    wire:poll.4s
     x-data="{
         status: @entangle('currentStatus'),
         init() {
@@ -47,7 +46,7 @@
         <span class="page-kicker mx-auto">{{ $business->name }}</span>
         <h2 class="mt-4 text-4xl font-bold tracking-[-0.06em] text-slate-950 sm:text-5xl">{{ $entry->ticket_code }}</h2>
         <p class="mt-3 text-sm text-slate-600 sm:text-base">
-            Keep this page open. Your position and status will update automatically every few seconds.
+            Keep this page open. Your position and status now update in real time without refreshing.
         </p>
     </div>
 
@@ -79,8 +78,8 @@
                         <p class="mt-3 text-3xl font-bold tracking-[-0.05em]">{{ $entry->ticket_code }}</p>
                     </div>
                     <div class="rounded-[1.3rem] border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
-                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/70">Refresh</p>
-                        <p class="mt-3 text-3xl font-bold tracking-[-0.05em]">4s</p>
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/70">Sync</p>
+                        <p class="mt-3 text-3xl font-bold tracking-[-0.05em]">Live</p>
                     </div>
                 </div>
             </div>
@@ -101,7 +100,7 @@
                     <div class="soft-card">
                         <h3 class="text-2xl font-bold tracking-[-0.04em] text-slate-950">You are in line.</h3>
                         <p class="mt-3 text-sm text-slate-600">
-                            You do not need to stay right at the counter. Keep this page open and we will update you when it is your turn.
+                            You do not need to stay right at the service point. Keep this page open and we will update you when it is your turn.
                         </p>
                     </div>
                 @elseif($entry->status === \App\Enums\QueueStatus::CALLED->value)
@@ -110,10 +109,10 @@
                             !
                         </div>
                         <h3 class="mt-5 text-3xl font-bold tracking-[-0.05em] text-slate-950">It is your turn.</h3>
-                        <p class="mt-3 text-sm text-slate-600">Please head to the counter now.</p>
-                        @if($entry->counter_id)
+                        <p class="mt-3 text-sm text-slate-600">Please head to your assigned service point now.</p>
+                        @if($this->servicePointLabel)
                             <div class="mt-5 inline-flex rounded-full bg-slate-950 px-5 py-2 text-sm font-semibold text-white">
-                                Counter {{ $entry->counter_id }}
+                                {{ $this->servicePointLabel }}
                             </div>
                         @endif
                     </div>
@@ -185,6 +184,6 @@
     @endif
 
     <p class="text-center text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-slate-400">
-        Updating automatically every 4 seconds
+        Live queue sync enabled
     </p>
 </div>
