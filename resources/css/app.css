@@ -94,22 +94,20 @@
     }
 
     body {
-        @apply min-h-screen text-slate-900 antialiased;
+        @apply min-h-screen text-slate-800 antialiased;
         font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-        background:
-            radial-gradient(ellipse 80% 50% at 0% 0%, rgba(20, 184, 166, 0.12) 0%, transparent 55%),
-            radial-gradient(ellipse 60% 40% at 100% 0%, rgba(249, 89, 35, 0.10) 0%, transparent 50%),
-            radial-gradient(ellipse 50% 60% at 50% 100%, rgba(20, 184, 166, 0.06) 0%, transparent 60%),
-            linear-gradient(180deg, #fffcf9 0%, #f7f0e8 55%, #eee6d9 100%);
+        background: #f8fafc;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.08) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(249, 89, 35, 0.05) 0px, transparent 50%);
     }
 
     .dark body {
-        @apply text-slate-100;
-        background:
-            radial-gradient(ellipse 70% 50% at 0% 0%, rgba(20, 184, 166, 0.16) 0%, transparent 50%),
-            radial-gradient(ellipse 50% 40% at 100% 0%, rgba(249, 89, 35, 0.10) 0%, transparent 45%),
-            radial-gradient(ellipse 60% 50% at 50% 100%, rgba(13, 148, 136, 0.08) 0%, transparent 55%),
-            linear-gradient(180deg, #070f18 0%, #0c1624 55%, #060d14 100%);
+        @apply text-slate-200;
+        background: #050811; /* Deep premium space */
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.12) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(249, 89, 35, 0.08) 0px, transparent 50%);
     }
 
     /* Subtle dot-grid overlay */
@@ -244,7 +242,7 @@ select:focus[data-flux-control] {
 
     /* ── Layout Shells ───────────────────────── */
     .page-shell {
-        @apply relative z-10 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-10;
+        @apply relative z-10 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-10;
     }
 
     .page-shell--tight {
@@ -261,13 +259,13 @@ select:focus[data-flux-control] {
     }
 
     .dark .page-kicker {
-        @apply border-brand-500/25 bg-brand-500/12 text-brand-300;
+        @apply border-brand-500/20 bg-brand-500/10 text-brand-300;
     }
 
     /* ── Page Typography ─────────────────────── */
     .page-title {
         font-family: var(--font-display);
-        @apply text-4xl font-extrabold tracking-[-0.04em] text-slate-950 sm:text-5xl;
+        @apply text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl;
     }
 
     .dark .page-title {
@@ -275,188 +273,100 @@ select:focus[data-flux-control] {
     }
 
     .page-description {
-        @apply max-w-2xl text-[0.93rem] leading-relaxed text-slate-500 sm:text-base dark:text-slate-400;
+        @apply max-w-2xl text-[0.95rem] leading-relaxed text-slate-500 sm:text-base dark:text-slate-400;
     }
 
-    /* ── Glass Card ──────────────────────────── */
-    .glass-card {
-        @apply relative z-10 overflow-hidden rounded-3xl border border-white/70 bg-white/75 p-6 backdrop-blur-2xl;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.6) inset,
-            0 2px 4px rgba(15, 23, 42, 0.04),
-            0 24px 64px -32px rgba(15, 23, 42, 0.20);
+    /* ── Unified Premium Cards ───────────────── */
+    .glass-card, .soft-card, .metric-card, .toolbar-card, .settings-nav-card, .settings-content-card, .auth-card, .public-panel, .public-stat, .feature-card, .pricing-card {
+        @apply relative z-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-white/70 backdrop-blur-3xl transition-all duration-300;
+        box-shadow: 
+            0 1px 2px rgba(0,0,0,0.02), 
+            0 12px 32px -12px rgba(0,0,0,0.06),
+            inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+    
+    .dark .glass-card, .dark .soft-card, .dark .metric-card, .dark .toolbar-card, .dark .settings-nav-card, .dark .settings-content-card, .dark .auth-card, .dark .public-panel, .dark .public-stat, .dark .feature-card, .dark .pricing-card {
+        @apply border-white/10 bg-slate-900/40;
+        box-shadow: 
+            0 1px 2px rgba(0,0,0,0.2), 
+            0 16px 48px -12px rgba(0,0,0,0.4),
+            inset 0 1px 0 rgba(255,255,255,0.05);
     }
 
-    .dark .glass-card {
-        @apply border-white/8 bg-slate-950/65;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-            0 2px 4px rgba(0, 0, 0, 0.3),
-            0 24px 64px -32px rgba(0, 0, 0, 0.6);
+    /* Padding adjustments for cards */
+    .glass-card, .settings-content-card, .auth-card, .public-panel, .feature-card, .pricing-card {
+        @apply p-8;
+    }
+    .soft-card, .metric-card, .toolbar-card, .public-stat {
+        @apply p-6;
+    }
+    .settings-nav-card {
+        @apply p-4;
     }
 
-    /* ── Soft Card ───────────────────────────── */
-    .soft-card {
-        @apply rounded-2xl border border-slate-100 bg-white/96 p-5;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+    /* Interactive cards */
+    .feature-card:hover, .pricing-card:hover {
+        @apply -translate-y-1 bg-white/90;
+        box-shadow: 
+            0 4px 12px rgba(0,0,0,0.04), 
+            0 32px 64px -16px rgba(20, 184, 166, 0.12),
+            inset 0 1px 0 rgba(255,255,255,1);
+    }
+    .dark .feature-card:hover, .dark .pricing-card:hover {
+        @apply bg-slate-900/60;
+        box-shadow: 
+            0 4px 12px rgba(0,0,0,0.3), 
+            0 32px 64px -16px rgba(20, 184, 166, 0.2),
+            inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
-    .dark .soft-card {
-        @apply border-white/6 bg-slate-900/80;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-    }
-
-    /* ── Metric Card ─────────────────────────── */
-    .metric-card {
-        @apply relative z-10 overflow-hidden rounded-2xl border border-white/70 bg-white/80 p-5 backdrop-blur-xl;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.5) inset,
-            0 2px 4px rgba(15, 23, 42, 0.04),
-            0 16px 48px -24px rgba(15, 23, 42, 0.16);
-    }
-
-    .dark .metric-card {
-        @apply border-white/8 bg-slate-900/70;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-            0 2px 4px rgba(0, 0, 0, 0.25),
-            0 16px 48px -24px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Metric card decorative teal glow in top-right */
+    /* Metric card decorative teal glow */
     .metric-card::after {
         content: '';
         position: absolute;
-        top: -24px;
-        right: -24px;
-        width: 80px;
-        height: 80px;
+        top: -30px;
+        right: -30px;
+        width: 100px;
+        height: 100px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(20, 184, 166, 0.18) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(20, 184, 166, 0.12) 0%, transparent 70%);
         pointer-events: none;
     }
 
     .metric-label {
-        @apply text-[0.7rem] font-bold uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500;
+        @apply text-[0.7rem] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400;
     }
 
     .metric-value {
-        @apply mt-3 text-3xl font-extrabold tracking-[-0.04em] text-slate-950 dark:text-white sm:text-4xl;
+        @apply mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl;
         font-family: var(--font-display);
+    }
+
+    /* Toolbar Layout */
+    .toolbar-card {
+        @apply flex flex-col gap-4 md:flex-row md:items-center md:justify-between;
+    }
+
+    /* Settings Layout */
+    .settings-shell {
+        @apply grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)];
     }
 
     /* ── Badge Pill ──────────────────────────── */
     .badge-pill {
-        @apply inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/90 px-3 py-1 text-[0.72rem] font-semibold text-slate-600 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300;
+        @apply inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[0.7rem] font-semibold text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-800 dark:text-slate-200;
     }
 
     .badge-pill--brand {
-        @apply border-brand-200/80 bg-brand-50 text-brand-700 dark:border-brand-500/25 dark:bg-brand-500/12 dark:text-brand-300;
+        @apply border-brand-200 bg-brand-50 text-brand-700 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-brand-300;
     }
 
     .badge-pill--success {
-        @apply border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/12 dark:text-emerald-300;
+        @apply border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300;
     }
 
     .badge-pill--danger {
-        @apply border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/25 dark:bg-rose-500/12 dark:text-rose-300;
-    }
-
-    /* ── Toolbar Card ────────────────────────── */
-    .toolbar-card {
-        @apply relative z-10 flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/70 bg-white/80 p-5 backdrop-blur-xl md:flex-row md:items-center md:justify-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.14);
-    }
-
-    .dark .toolbar-card {
-        @apply border-white/8 bg-slate-900/70;
-    }
-
-    /* ── Settings Layout ─────────────────────── */
-    .settings-shell {
-        @apply grid gap-6 lg:grid-cols-[280px_minmax(0, 1fr)];
-    }
-
-    .settings-nav-card {
-        @apply relative z-10 overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-3 backdrop-blur-xl;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 16px 48px -20px rgba(15, 23, 42, 0.14);
-    }
-
-    .settings-content-card {
-        @apply relative z-10 overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-6 backdrop-blur-xl sm:p-8;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 16px 48px -20px rgba(15, 23, 42, 0.14);
-    }
-
-    .dark .settings-nav-card,
-    .dark .settings-content-card {
-        @apply border-white/8 bg-slate-900/70;
-    }
-
-    /* ── Auth Cards ──────────────────────────── */
-    .auth-card {
-        @apply relative z-10 rounded-[2rem] border border-white/70 bg-white/88 p-6 backdrop-blur-2xl sm:p-8;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.7) inset,
-            0 4px 8px rgba(15, 23, 42, 0.04),
-            0 32px 80px -32px rgba(15, 23, 42, 0.22);
-    }
-
-    .dark .auth-card {
-        @apply border-white/8 bg-slate-950/78;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-            0 4px 8px rgba(0, 0, 0, 0.3),
-            0 32px 80px -32px rgba(0, 0, 0, 0.7);
-    }
-
-    .auth-metric {
-        @apply rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm;
-    }
-
-    /* ── Public Panel ────────────────────────── */
-    .public-panel {
-        @apply relative z-10 rounded-[2rem] border border-white/70 bg-white/85 p-5 backdrop-blur-2xl sm:p-8;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.65) inset,
-            0 4px 8px rgba(15, 23, 42, 0.04),
-            0 32px 80px -40px rgba(15, 23, 42, 0.20);
-    }
-
-    .public-stat {
-        @apply relative z-10 rounded-2xl border border-white/70 bg-white/90 p-5 text-center backdrop-blur;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 16px 40px -20px rgba(15, 23, 42, 0.14);
-    }
-
-    .dark .public-stat,
-    .dark .public-panel {
-        @apply border-white/8 bg-slate-950/75;
-    }
-
-    /* ── Feature Card ────────────────────────── */
-    .feature-card {
-        @apply relative z-10 h-full overflow-hidden rounded-3xl border border-white/70 bg-white/78 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 16px 48px -20px rgba(15, 23, 42, 0.14);
-    }
-
-    .feature-card:hover {
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08), 0 24px 60px -20px rgba(20, 184, 166, 0.15);
-    }
-
-    .dark .feature-card {
-        @apply border-white/8 bg-slate-900/70;
-    }
-
-    /* ── Pricing Card ────────────────────────── */
-    .pricing-card {
-        @apply relative z-10 overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 p-8;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.6) inset,
-            0 4px 8px rgba(15, 23, 42, 0.04),
-            0 24px 64px -32px rgba(15, 23, 42, 0.18);
-    }
-
-    .dark .pricing-card {
-        @apply border-white/8 bg-slate-950/75;
+        @apply border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300;
     }
 
     /* ── Button Links ────────────────────────── */

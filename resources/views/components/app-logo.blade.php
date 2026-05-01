@@ -12,7 +12,7 @@
         <img src="/favicon.svg" alt="Qline logo" class="h-10 w-10" />
     </span>
 
-    <span class="min-w-0">
+    <span class="min-w-0 {{ $sidebar ? 'in-data-flux-sidebar-collapsed-desktop:hidden' : '' }}">
         <span class="brand-wordmark {{ $sidebar ? 'text-lg' : '' }} {{ $inverse ? '!text-white' : '' }}">Qline</span>
         <span class="brand-meta {{ $inverse ? '!text-white/70' : '' }}">
         </span>

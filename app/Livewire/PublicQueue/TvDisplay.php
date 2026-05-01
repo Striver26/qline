@@ -68,7 +68,6 @@ class TvDisplay extends Component
     public function syncRealtime(): void
     {
         $this->business->refresh();
-        $this->dispatch('queue-updated');
     }
 
     public function render()

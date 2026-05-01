@@ -89,6 +89,7 @@ class QueueService
         $servicePoints = ServicePoint::query()
             ->select(['id', 'business_id', 'name', 'status', 'is_active'])
             ->where('business_id', $business->id)
+            ->where('is_active', true)
             ->orderBy('name')
             ->get();
 
@@ -385,6 +386,81 @@ class QueueService
             $this->notifyUpcomingEntry($business);
 
             return $activatedEntry;
+        });
+    }
+
+    /**
+     * Reassign an active (called/serving) ticket to a different service point.
+     */
+    public function reassignEntry(int $entryId, int $servicePointId): QueueEntry
+    {
+        return DB::transaction(function () use ($entryId, $servicePointId): QueueEntry {
+            $entry = QueueEntry::query()
+                ->whereKey($entryId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (!in_array($entry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+                throw new RuntimeException('Only active tickets can be reassigned to another service point.');
+            }
+
+            $business = $this->lockBusiness($entry->business_id);
+
+            $this->ensureActiveSubscription($business);
+            $this->ensureQueueOpen($business);
+
+            // Ensure the target is different from the current
+            if ($entry->service_point_id === $servicePointId) {
+                throw new RuntimeException('Ticket is already at this service point.');
+            }
+
+            // Lock and validate the target service point
+            $targetServicePoint = ServicePoint::query()
+                ->where('business_id', $business->id)
+                ->whereKey($servicePointId)
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$targetServicePoint) {
+                throw new RuntimeException('Target service point is unavailable.');
+            }
+
+            $targetIsBusy = QueueEntry::query()
+                ->forBusiness($business->id)
+                ->active()
+                ->where('service_point_id', $targetServicePoint->id)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($targetIsBusy) {
+                throw new RuntimeException("{$targetServicePoint->name} is already handling another ticket.");
+            }
+
+            // Release the old service point
+            if ($entry->service_point_id) {
+                $this->releaseServicePointById($entry->service_point_id);
+            }
+
+            // Occupy the new service point
+            $targetServicePoint->update(['status' => TableStatus::OCCUPIED->value]);
+
+            $entry->update([
+                'service_point_id' => $targetServicePoint->id,
+                'called_at' => now(),
+            ]);
+
+            $freshEntry = $entry->fresh(['servicePoint:id,name,status,is_active']);
+
+            event(new TicketStatusUpdated($freshEntry, $business));
+            $this->broadcastQueueMutation(
+                $business->id,
+                'reassignEntry',
+                $freshEntry->id,
+                $freshEntry->service_point_id,
+            );
+
+            return $freshEntry;
         });
     }
 

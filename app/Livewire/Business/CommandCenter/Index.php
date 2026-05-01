@@ -123,7 +123,31 @@ class Index extends Component
 
     public function handleDrop(int $entryId, string $targetType, int $targetId): void
     {
-        $this->callEntry($entryId, $targetId);
+        // Determine if this is a waiting entry or an active entry
+        $isActive = collect($this->activeEntries)->contains(fn (array $e) => $e['id'] === $entryId);
+
+        if ($isActive) {
+            $this->reassignEntry($entryId, $targetId);
+        } else {
+            $this->callEntry($entryId, $targetId);
+        }
+    }
+
+    #[On('command-center.reassign')]
+    public function reassignEntry(int $entryId, int $servicePointId): void
+    {
+        $queueService = app(QueueService::class);
+
+        try {
+            $entry = $queueService->reassignEntry($entryId, $servicePointId);
+            $destination = $entry->servicePoint?->name ?? 'the selected service point';
+
+            $this->dispatch('notify', type: 'success', message: "Reassigned {$entry->ticket_code} to {$destination}.");
+        } catch (Throwable $exception) {
+            $this->dispatch('notify', type: 'error', message: $exception->getMessage());
+        }
+
+        $this->hydrateSnapshot($queueService);
     }
 
     #[On('command-center.mark-done')]

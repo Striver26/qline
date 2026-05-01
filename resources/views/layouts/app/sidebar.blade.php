@@ -6,23 +6,14 @@
 </head>
 
 <body class="min-h-screen text-slate-900 dark:text-slate-100">
-    <div
-        class="pointer-events-none fixed inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top_left,rgba(20,159,124,0.24),transparent_52%),radial-gradient(circle_at_top_right,rgba(255,116,73,0.16),transparent_38%)]">
-    </div>
-    <div
-        class="pointer-events-none fixed bottom-[-140px] right-[-120px] h-80 w-80 rounded-full bg-coral-400/20 blur-3xl">
-    </div>
-
-    <flux:sidebar sticky collapsible="mobile"
-        class="border-e border-white/60 bg-white/78 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/82">
-        <flux:sidebar.header class="px-4 pt-4">
-            <div class="glass-card !rounded-[1.6rem] !p-4">
-                <div class="flex items-center justify-between gap-3">
-                    <x-app-logo :sidebar="true"
-                        href="{{ route(in_array(auth()->user()->role, [\App\Enums\UserRole::SUPERADMIN, \App\Enums\UserRole::PLATFORM_STAFF]) ? 'admin.dashboard' : 'business.dashboard') }}"
-                        wire:navigate />
-                    <flux:sidebar.collapse class="lg:hidden" />
-                </div>
+    <flux:sidebar sticky collapsible
+        class="border-e border-slate-200/80 bg-white/80 backdrop-blur-2xl dark:border-white/5 dark:bg-[#050811]/90">
+        <flux:sidebar.header class="px-2 pt-4">
+            <div class="flex items-center justify-between gap-2 px-2">
+                <x-app-logo :sidebar="true"
+                    href="{{ route(in_array(auth()->user()->role, [\App\Enums\UserRole::SUPERADMIN, \App\Enums\UserRole::PLATFORM_STAFF]) ? 'admin.dashboard' : 'business.dashboard') }}"
+                    wire:navigate />
+                <flux:sidebar.collapse />
             </div>
         </flux:sidebar.header>
 
@@ -126,7 +117,7 @@
             });
         @endphp
         <div
-            class="mx-3 mb-3 rounded-[1.5rem] border border-brand-200/70 bg-brand-50/85 p-4 text-sm text-brand-900 shadow-sm dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-100">
+            class="mx-3 mb-3 rounded-[1.5rem] border border-brand-200/70 bg-brand-50/85 p-4 text-sm text-brand-900 shadow-sm dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-100 in-data-flux-sidebar-collapsed-desktop:hidden">
             <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-brand-700 dark:text-brand-200">
                 Quote
             </p>
@@ -139,7 +130,7 @@
     </flux:sidebar>
 
     <flux:header
-        class="border-b border-white/60 bg-white/72 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/78 lg:hidden">
+        class="border-b border-slate-200/80 bg-white/80 backdrop-blur-2xl dark:border-white/5 dark:bg-[#050811]/90 lg:hidden">
         <flux:sidebar.toggle class="lg:hidden mr-3" icon="bars-2" inset="left" />
 
         <x-app-logo

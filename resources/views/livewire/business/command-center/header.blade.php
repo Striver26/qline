@@ -1,18 +1,21 @@
-<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+<div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
     <div>
-        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
-            Command Center
-        </h1>
-        <p class="text-sm text-slate-500 mt-1">
-            Manage your queue and serve customers smoothly.
-        </p>
+        <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 ring-1 ring-teal-500/20">
+                <flux:icon.bolt class="h-5 w-5 text-teal-400" />
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Command Center</h1>
+                <p class="text-[12px] text-slate-500 mt-0.5">Manage your queue and serve customers smoothly.</p>
+            </div>
+        </div>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap items-center gap-2">
         @if($businessState['queue_status'] === 'open')
             <button
                 wire:click="$dispatch('command-center.toggle-queue')"
-                class="flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-sm font-semibold text-teal-400 transition hover:bg-teal-500/20"
+                class="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-3.5 py-1.5 text-[13px] font-semibold text-teal-400 transition hover:bg-teal-500/20"
             >
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
@@ -23,7 +26,7 @@
         @else
             <button
                 wire:click="$dispatch('command-center.toggle-queue')"
-                class="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm font-semibold text-slate-400 transition hover:bg-slate-800"
+                class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-3.5 py-1.5 text-[13px] font-semibold text-slate-400 transition hover:bg-slate-800"
             >
                 <div class="h-2 w-2 rounded-full bg-slate-500"></div>
                 Closed
@@ -33,17 +36,17 @@
         @if($businessState['queue_status'] === 'open')
             <button
                 wire:click="$set('showPauseModal', true)"
-                class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                class="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.04] px-3.5 py-1.5 text-[13px] font-semibold text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
             >
-                <flux:icon.pause class="h-4 w-4 opacity-70" />
+                <flux:icon.pause class="h-3.5 w-3.5 opacity-60" />
                 Pause
             </button>
         @elseif($businessState['queue_status'] === 'paused')
             <button 
                 wire:click="$dispatch('command-center.resume-queue')" 
-                class="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-400 transition hover:bg-amber-500/20"
+                class="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1.5 text-[13px] font-semibold text-amber-400 transition hover:bg-amber-500/20"
             >
-                <flux:icon.play class="h-4 w-4" />
+                <flux:icon.play class="h-3.5 w-3.5" />
                 Resume
             </button>
         @endif
@@ -51,18 +54,18 @@
         <a
             href="{{ route('public.tv', ['slug' => $businessState['slug'], 'token' => $businessState['tv_token']]) }}"
             target="_blank"
-            class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+            class="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.04] px-3.5 py-1.5 text-[13px] font-semibold text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
         >
-            <flux:icon.tv class="h-4 w-4 opacity-70" />
+            <flux:icon.tv class="h-3.5 w-3.5 opacity-60" />
             TV Board
         </a>
 
         <button
             wire:click="$dispatch('command-center.quick-add')"
-            class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.04] px-3.5 py-1.5 text-[13px] font-semibold text-slate-300 transition hover:bg-white/[0.08] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
             @disabled($businessState['queue_status'] !== 'open')
         >
-            <flux:icon.plus class="h-4 w-4 opacity-70" />
+            <flux:icon.plus class="h-3.5 w-3.5 opacity-60" />
             Quick Add
         </button>
     </div>
