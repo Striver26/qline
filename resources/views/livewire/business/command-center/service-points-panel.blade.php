@@ -1,61 +1,47 @@
-<section class="glass-card !p-0 overflow-hidden">
-    <div class="flex items-center justify-between border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
-        <div>
-            <p class="metric-label">Service Points</p>
-            <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Active Service Points</h2>
-        </div>
-
-        <span class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Drop targets</span>
+<section class="rounded-[1.5rem] bg-[#0A0F1C] border border-white/5 overflow-hidden flex flex-col h-full">
+    <div class="flex items-center justify-between border-b border-white/5 px-6 py-5 shrink-0">
+        <h2 class="text-[11px] font-bold uppercase tracking-widest text-slate-500">Service Points</h2>
+        <a href="{{ route('business.service-points') }}" class="rounded-md bg-white/5 border border-white/5 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:bg-white/10 hover:text-white transition">
+            Manage
+        </a>
     </div>
 
-    <div class="space-y-6 p-5">
-        @if($businessState['can_use_servicePoints'] && count($servicePoints))
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="metric-label">Service Points</p>
-                        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Select a default service point or drag a waiting ticket straight onto one.</p>
-                    </div>
-                    @if($selectedServicePointId)
-                        <span class="badge-pill">Service Point selected</span>
+    <div class="divide-y divide-white/5 flex-1 overflow-y-auto">
+        @forelse($servicePoints as $servicePoint)
+            <div
+                data-queue-dropzone
+                data-target-type="servicePoint"
+                data-target-id="{{ $servicePoint['id'] }}"
+                data-accepting="{{ $businessState['queue_status'] === 'open' && !$servicePoint['is_busy'] ? 'true' : 'false' }}"
+                class="flex items-center justify-between gap-4 px-6 py-4 transition hover:bg-white/[0.02]"
+            >
+                <div class="flex items-center gap-3 min-w-[120px]">
+                    <flux:icon.user class="h-4 w-4 text-slate-400" />
+                    <span class="text-[13px] font-bold text-white">{{ $servicePoint['name'] }}</span>
+                </div>
+
+                <div class="flex items-center gap-2 min-w-[100px]">
+                    <span class="h-2 w-2 rounded-full {{ $servicePoint['is_busy'] ? 'bg-amber-500' : 'bg-teal-500 shadow-[0_0_8px_rgba(45,212,191,0.5)]' }}"></span>
+                    <span class="text-[11px] font-semibold uppercase tracking-widest {{ $servicePoint['is_busy'] ? 'text-amber-500' : 'text-teal-400' }}">
+                        {{ $servicePoint['is_busy'] ? 'Busy' : 'Available' }}
+                    </span>
+                </div>
+
+                <div class="flex-1 text-right flex flex-col items-end">
+                    @if($servicePoint['is_busy'])
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest mb-0.5">Currently serving</span>
+                        <span class="text-[13px] font-black text-amber-400">{{ $servicePoint['active_ticket_code'] }}</span>
+                    @else
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest mb-0.5">Next ticket</span>
+                        <span class="text-[13px] font-black text-teal-400">{{ $nextEntry['ticket_code'] ?? '--' }}</span>
                     @endif
                 </div>
-
-                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    @foreach($servicePoints as $servicePoint)
-                        <div
-                            data-queue-dropzone
-                            data-target-type="servicePoint"
-                            data-target-id="{{ $servicePoint['id'] }}"
-                            data-accepting="{{ $businessState['queue_status'] === 'open' && !$servicePoint['is_busy'] ? 'true' : 'false' }}"
-                            class="rounded-[1.4rem] border p-4 transition {{ $selectedServicePointId === $servicePoint['id'] ? 'border-brand-200 bg-brand-50/70' : 'border-slate-200 bg-white' }} {{ $servicePoint['is_busy'] ? 'opacity-60' : '' }}"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-400">Service Point</p>
-                                    <p class="mt-2 text-lg font-bold tracking-[-0.04em] text-slate-950">{{ $servicePoint['name'] }}</p>
-                                    <p class="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                                        {{ $servicePoint['is_busy'] ? "Busy with {$servicePoint['active_ticket_code']}" : 'Available for next call' }}
-                                    </p>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    wire:click="$dispatch('command-center.select-servicePoint', { servicePointId: {{ $servicePoint['id'] }} })"
-                                    @disabled($servicePoint['is_busy'])
-                                    class="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 transition hover:border-brand-200 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    {{ $selectedServicePointId === $servicePoint['id'] ? 'Selected' : 'Select' }}
-                                </button>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
             </div>
-        @else
-            <div class="soft-card text-sm text-slate-500">
-                No service points are configured yet. Once created, they will appear here as live drop targets.
+        @empty
+            <div class="flex h-40 flex-col items-center justify-center text-slate-500">
+                <flux:icon.squares-2x2 class="h-6 w-6 opacity-40 mb-2" />
+                <p class="text-[13px] font-medium">No service points</p>
             </div>
-        @endif
+        @endforelse
     </div>
 </section>

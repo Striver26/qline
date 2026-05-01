@@ -1,63 +1,58 @@
-<section class="glass-card !p-0 overflow-hidden">
-    <div class="flex items-center justify-between border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
-        <div>
-            <p class="metric-label">Waiting Queue</p>
-            <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Drag from the live waiting list</h2>
+<section class="rounded-[1.5rem] bg-[#0A0F1C] border border-white/5 overflow-hidden flex flex-col h-full">
+    <div class="flex items-center justify-between border-b border-white/5 px-6 py-5 shrink-0">
+        <h2 class="text-[11px] font-bold uppercase tracking-widest text-slate-500">Waiting Queue</h2>
+        <div class="flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+            {{ count($waitingEntries) }} waiting <flux:icon.chevron-right class="h-3 w-3" />
         </div>
-
-        <span class="badge-pill">{{ count($waitingEntries) }} shown</span>
     </div>
 
-    <div class="border-b border-slate-200/70 bg-slate-50/70 px-6 py-4 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
-        Drag the next customer onto a free table or available counter. The first ticket is highlighted as the current priority.
-        @if($hiddenCount > 0)
-            <span class="font-semibold text-slate-700 dark:text-slate-200">Showing the next {{ count($waitingEntries) }} tickets with {{ $hiddenCount }} more still waiting.</span>
-        @endif
-    </div>
-
-    <div data-queue-waiting-list class="space-y-3 p-5">
+    <div data-queue-waiting-list class="divide-y divide-white/5 flex-1 overflow-y-auto">
         @forelse($waitingEntries as $entry)
-            <article
+            <div
                 data-queue-entry
                 data-entry-id="{{ $entry['id'] }}"
-                class="soft-card cursor-grab border {{ $entry['is_next'] ? 'border-brand-200 bg-brand-50/70 shadow-[0_22px_50px_-36px_rgba(15,159,124,0.45)]' : 'border-transparent' }}"
+                class="flex items-center gap-4 px-6 py-4 cursor-grab hover:bg-white/[0.02] transition-colors {{ $entry['is_next'] ? 'bg-teal-500/[0.02]' : '' }}"
             >
-                <div class="flex items-start gap-4">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] {{ $entry['is_next'] ? 'mesh-accent text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300' }}">
+                <div class="flex items-center gap-4 w-1/3 min-w-[120px]">
+                    <div class="flex h-6 w-8 shrink-0 items-center justify-center rounded bg-white/5 border border-white/5 text-[10px] font-bold text-slate-400">
                         #{{ $entry['queue_position'] }}
                     </div>
-
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center justify-between gap-3">
-                            <p class="truncate text-base font-bold tracking-[-0.03em] text-slate-950 dark:text-white">{{ $entry['ticket_code'] }}</p>
-                            @if($entry['is_next'])
-                                <span class="rounded-full border border-brand-200 bg-white px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-brand-700">
-                                    Next
-                                </span>
-                            @endif
-                        </div>
-
-                        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                            <span>{{ $entry['customer_label'] }}</span>
-                            <span>{{ $entry['source_label'] }}</span>
-                            <span>~{{ $entry['estimated_wait_mins'] }} min</span>
-                            <span>{{ $entry['created_human'] }}</span>
-
-                            <button 
-                                wire:click="$dispatch('command-center.print-entry', { entryId: {{ $entry['id'] }} })"
-                                class="ml-auto flex items-center gap-1.5 text-brand-600 hover:text-brand-700 transition-colors"
-                            >
-                                <flux:icon.printer class="h-3.5 w-3.5" />
-                                <span>Print</span>
-                            </button>
-                        </div>
-                    </div>
+                    <span class="text-sm font-black text-white tracking-tight">{{ $entry['ticket_code'] }}</span>
                 </div>
-            </article>
+
+                <div class="flex-1 text-[13px] font-medium text-slate-300 truncate">
+                    {{ $entry['customer_label'] }}
+                </div>
+
+                <div class="flex items-center justify-end gap-6 w-1/3 min-w-[140px]">
+                    <span class="text-[12px] font-medium text-slate-500 tabular-nums">
+                        ~{{ $entry['estimated_wait_mins'] }} min
+                    </span>
+
+                    @if($entry['is_next'])
+                        <span class="flex h-5 items-center rounded-md bg-teal-500/10 border border-teal-500/20 px-2 text-[9px] font-bold uppercase tracking-widest text-teal-400">
+                            Next
+                        </span>
+                    @else
+                        <span class="flex h-5 items-center rounded-md bg-white/5 border border-white/5 px-2 text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                            Wait
+                        </span>
+                    @endif
+                </div>
+            </div>
         @empty
-            <div class="p-12 text-center text-slate-400">
-                Queue is empty.
+            <div class="flex h-40 flex-col items-center justify-center text-slate-500">
+                <flux:icon.users class="h-6 w-6 opacity-40 mb-2" />
+                <p class="text-[13px] font-medium">Queue is empty</p>
             </div>
         @endforelse
     </div>
+    
+    @if(count($waitingEntries) > 0)
+        <div class="border-t border-white/5 bg-[#060913]/30 px-6 py-3 text-center shrink-0">
+            <button class="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-white transition flex items-center justify-center w-full gap-1.5">
+                View all waiting <flux:icon.chevron-down class="h-3 w-3" />
+            </button>
+        </div>
+    @endif
 </section>

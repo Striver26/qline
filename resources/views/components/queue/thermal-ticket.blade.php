@@ -1,27 +1,30 @@
 @php
-    $queueService = app(\App\Services\Queue\QueueService::class);
-    $info = $queueService->getPositionInfo($entry);
-    $position = $info['position'];
-    $ahead = $info['ahead'];
-    $waitMins = $info['estimated_wait_mins'];
+    $position = $entry['queue_position'] ?? 0;
+    $ahead = max(0, $position - 1);
+    $waitMins = $entry['estimated_wait_mins'] ?? 0;
+    $ticketCode = $entry['ticket_code'] ?? '';
+    $entryId = $entry['id'] ?? 0;
+    
+    // The business model isn't passed directly as an object, so we load it once using the passed ID
+    $business = \App\Models\Tenant\Business::find($businessId);
 @endphp
 
-<div id="thermal-ticket-{{ $entry->id }}" class="thermal-ticket-content hidden">
+<div id="thermal-ticket-{{ $entryId }}" class="thermal-ticket-content hidden">
     <div style="width: 80mm; padding: 5mm; font-family: 'Inter', sans-serif; color: black; background: white; text-align: center;">
         <!-- Header -->
         <div style="font-size: 14pt; font-weight: bold; margin-bottom: 2mm; border-bottom: 1px dashed #ccc; padding-bottom: 2mm;">
-            {{ $business->name }}
+            {{ $business?->name ?? 'Queue System' }}
         </div>
         
         <div style="font-size: 10pt; margin-bottom: 4mm; color: #666;">
-            {{ now()->timezone($business->timezone ?? 'UTC')->format('d M Y, H:i') }}
+            {{ now()->timezone($business?->timezone ?? config('app.timezone', 'UTC'))->format('d M Y, H:i') }}
         </div>
 
         <!-- Ticket Code -->
         <div style="margin: 5mm 0;">
             <div style="font-size: 12pt; text-transform: uppercase; letter-spacing: 2px; color: #888;">YOUR TICKET</div>
             <div style="font-size: 52pt; font-weight: 900; line-height: 1; margin: 2mm 0; font-variant-numeric: tabular-nums;">
-                {{ $entry->ticket_code }}
+                {{ $ticketCode }}
             </div>
         </div>
 

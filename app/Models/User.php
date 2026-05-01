@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use App\Enums\UserRole;
 
-#[Fillable(['name', 'email', 'password', 'business_id', 'role', 'phone', 'address', 'is_active', 'profile_completed'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'address', 'is_active', 'profile_completed'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {

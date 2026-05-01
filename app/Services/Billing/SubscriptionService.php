@@ -36,9 +36,9 @@ class SubscriptionService
             'daily_limit' => $dailyLimit === 0 ? 999999 : $dailyLimit,
         ]);
 
-        // Seed a default counter if tier supports counters and none exist
-        if (($tierConfig['counters'] ?? false) && $business && $business->counters()->count() === 0) {
-            $business->counters()->create([
+        // Seed a default service point if tier supports them and none exist
+        if (($tierConfig['counters'] ?? false) && $business && $business->servicePoints()->count() === 0) {
+            $business->servicePoints()->create([
                 'name' => 'Counter 1',
                 'is_active' => true,
             ]);

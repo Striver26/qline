@@ -28,20 +28,22 @@ Business owners get a powerful dashboard with live queue controls, analytics, st
 ## ✨ Features
 
 ### 🏪 For Businesses (Tenant Panel)
-- **Live Queue Dashboard** — Open, pause, or close queues with real-time ticket management
-- **Call / Serve / Skip / Cancel** — Full ticket lifecycle with counter assignment
+- **Command Center Dashboard** — Open, pause, or close queues with real-time ticket management and robust modal controls
+- **Call / Serve / Skip / Recall / Cancel** — Full ticket lifecycle with ServicePoint assignment and customer recall workflow
+- **Quick Add & Thermal Printing** — Register anonymous walk-ins instantly with integrated thermal receipt printing
 - **Queue Entries Log** — Searchable history of all tickets with status tracking
 - **Staff Management** — Invite & manage staff via email with role-based access
 - **Customer Feedback** — Collect and view customer ratings and comments
 - **Analytics Dashboard** — Insights into queue performance, wait times, and traffic patterns
-- **QR Code Generator** — Generate branded QR codes for customers to join queues
+- **QR Code Generator & Standee** — Generate branded QR codes and A4 print-ready standee designs
 - **Loyalty Rewards** — Create reward programs that auto-trigger on visit milestones
 - **Subscription & Billing** — Daily/Monthly subscription tiers with BillPlz integration
 
 ### 👥 For Customers (Public)
 - **Join Queue** — Scan a QR code or visit a link to join a queue instantly
 - **Live Ticket Status** — Real-time position tracking with estimated wait time
-- **WhatsApp Notifications** — Automatic alerts when called or status changes
+- **Secure Ticket Tracking** — Tokenized status URLs and date-aware tab recovery prevent unauthorized manipulation
+- **Automated Notifications** — WhatsApp alerts for position updates and automated proximity reminders to reduce no-shows
 - **TV Display Mode** — Large-screen display for waiting areas showing current queue
 - **Feedback Form** — Post-service feedback submission
 - **Self-Cancel** — Cancel tickets via a unique token link
@@ -49,9 +51,9 @@ Business owners get a powerful dashboard with live queue controls, analytics, st
 ### 🛡️ For Platform Admins
 - **Admin Dashboard** — Platform-wide overview and KPIs
 - **Platform Analytics** — Cross-business performance insights
-- **User Management** — View and manage all registered users
+- **User Management & Impersonation** — View all users and securely impersonate accounts for debugging and support
 - **Business Management** — Oversee all tenant businesses on the platform
-- **Subscription Management** — Monitor active subscriptions across tenants
+- **Subscription Controls** — Monitor subscriptions and manually manage billing details or override active statuses
 - **Payment Records** — Track all billing and payment transactions
 - **WhatsApp Message Logs** — Audit trail for all outbound WA messages
 - **Queue Entry Logs** — Platform-wide queue ticket history
@@ -92,18 +94,20 @@ app/
 │   ├── Actions/       # Reusable Livewire actions
 │   ├── Admin/         # Platform admin panel components
 │   ├── Business/      # Business tenant panel components
+│   ├── Forms/         # Livewire form objects for standardized state management
 │   ├── PublicQueue/   # Public-facing queue components
 │   └── Settings/      # User & business settings components
 ├── Mail/              # Staff & platform invitation mailers
 ├── Models/
 │   ├── Marketing/     # CustomerFeedback, LoyaltyReward, LoyaltyVisit, EarnedReward, WhatsappMessage
 │   ├── Platform/      # Invitation
-│   ├── Queue/         # QueueEntry, Counter, QrCode
-│   ├── Tenant/        # Business, Subscription, Payment, Counter
+│   ├── Queue/         # QueueEntry, QrCode
+│   ├── Tenant/        # Business, Subscription, Payment, ServicePoint
 │   └── User.php
 ├── Providers/         # Service providers
 └── Services/
     ├── Billing/       # BillPlzService
+    ├── Marketing/     # Marketing and notification logic
     ├── Queue/         # QueueService (core queue logic)
     └── WhatsApp/      # WhatsAppService
 ```

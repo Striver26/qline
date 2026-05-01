@@ -23,6 +23,67 @@ class BusinessesIndex extends Component
         $this->resetPage();
     } // FIX: was missing
 
+    public $managingSubBizId = null;
+    public $editSubType = '';
+    public $editSubStatus = '';
+    public $editSubExpiresAt = '';
+
+    public function manageSubscription($id)
+    {
+        $biz = Business::with('subscription')->findOrFail($id);
+        $this->managingSubBizId = $biz->id;
+        
+        $sub = $biz->subscription;
+        if ($sub) {
+            $this->editSubType = $sub->type instanceof \App\Enums\SubTier ? $sub->type->value : $sub->type;
+            $this->editSubStatus = $sub->status;
+            $this->editSubExpiresAt = $sub->expires_at ? $sub->expires_at->format('Y-m-d\TH:i') : '';
+        } else {
+            $this->editSubType = \App\Enums\SubTier::DAILY->value;
+            $this->editSubStatus = 'pending';
+            $this->editSubExpiresAt = now()->addDays(1)->format('Y-m-d\TH:i');
+        }
+        
+        $this->dispatch('modal-show', name: 'manage-subscription');
+    }
+
+    public function updateSubscription()
+    {
+        $this->validate([
+            'editSubType' => ['required', 'string'],
+            'editSubStatus' => ['required', 'string'],
+            'editSubExpiresAt' => ['required', 'date'],
+        ]);
+
+        $biz = Business::findOrFail($this->managingSubBizId);
+        
+        $sub = $biz->subscription()->firstOrCreate(
+            ['business_id' => $biz->id],
+            ['starts_at' => now(), 'type' => $this->editSubType, 'status' => 'pending', 'expires_at' => now()]
+        );
+        
+        $sub->update([
+            'type' => $this->editSubType,
+            'status' => $this->editSubStatus,
+            'expires_at' => $this->editSubExpiresAt,
+        ]);
+        
+        if ($this->editSubStatus === 'active') {
+            app(\App\Services\Billing\SubscriptionService::class)->activateSubscription($sub);
+            // Re-apply the manually chosen expiration date
+            $sub->update(['expires_at' => $this->editSubExpiresAt]);
+        }
+
+        AdminAuditLog::record('business.subscription_update', $biz, [
+            'new_type' => $this->editSubType,
+            'new_status' => $this->editSubStatus,
+            'new_expires_at' => $this->editSubExpiresAt,
+        ]);
+
+        $this->dispatch('modal-close', name: 'manage-subscription');
+        session()->flash('status', "Business subscription successfully updated.");
+    }
+
     public $editingBizId = null;
     public $editStatus = '';
 

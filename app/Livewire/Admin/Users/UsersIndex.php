@@ -36,21 +36,22 @@ class UsersIndex extends Component
             'inviteRole' => ['required', 'string', Rule::enum(\App\Enums\UserRole::class)],
         ]);
 
-        if ($this->inviteRole === \App\Enums\UserRole::SUPERADMIN->value && auth()->user()->role !== \App\Enums\UserRole::SUPERADMIN) {
+        if (\App\Enums\UserRole::tryFrom($this->inviteRole) === \App\Enums\UserRole::SUPERADMIN && auth()->user()->role !== \App\Enums\UserRole::SUPERADMIN) {
             session()->flash('error', 'Only superadmins can create other superadmins.');
             return;
         }
 
         $password = Str::random(10);
 
-        User::create([
+        $user = new User([
             'name' => 'Invited Staff',
             'email' => $this->inviteEmail,
             'password' => Hash::make($password),
-            'role' => $this->inviteRole,
             'email_verified_at' => now(),
             'profile_completed' => true,
         ]);
+        $user->role = $this->inviteRole;
+        $user->save();
 
         \Illuminate\Support\Facades\Mail::to($this->inviteEmail)->send(
             new \App\Mail\PlatformStaffInvitationMail(role: $this->inviteRole, password: $password)

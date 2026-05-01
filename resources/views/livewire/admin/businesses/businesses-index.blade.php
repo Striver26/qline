@@ -48,6 +48,7 @@
                                 <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="bottom top" />
                                 <flux:menu>
                                     <flux:menu.item wire:click="editStatus({{$biz->id}})" icon="pause-circle">Forced Status</flux:menu.item>
+                                    <flux:menu.item wire:click="manageSubscription({{$biz->id}})" icon="credit-card">Manage Subscription</flux:menu.item>
                                     <flux:menu.item wire:click="confirmDelete({{$biz->id}})" variant="danger" icon="trash">Melt Down Tenant</flux:menu.item>
                                 </flux:menu>
                             </flux:dropdown>
@@ -93,6 +94,37 @@
                     <flux:button variant="ghost">Cancel</flux:button>
                 </flux:modal.close>
                 <flux:button type="submit" variant="danger">OBLITERATE ALL</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="manage-subscription" class="min-w-[24rem]">
+        <form wire:submit="updateSubscription">
+            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Manage Subscription</h2>
+            <p class="text-sm text-slate-500 mb-6">Manually override billing details for this business.</p>
+            
+            <div class="space-y-4">
+                <flux:select label="Subscription Tier" wire:model="editSubType" required>
+                    @foreach(\App\Enums\SubTier::cases() as $tier)
+                        <option value="{{ $tier->value }}">{{ ucfirst($tier->value) }}</option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select label="Status" wire:model="editSubStatus" required>
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="past_due">Past Due</option>
+                    <option value="canceled">Canceled</option>
+                </flux:select>
+
+                <flux:input type="datetime-local" label="Expires At" wire:model="editSubExpiresAt" required />
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost">Cancel</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">Save Subscription</flux:button>
             </div>
         </form>
     </flux:modal>

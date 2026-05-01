@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Subscription Management Controls** — Administrative interface to manually edit billing details and toggle subscription statuses
+- **User Impersonation** — Allow administrators to securely simulate user sessions for debugging and support
+- **Command Center Enhancements** — Thermal printing workflow for "Quick Add", optimized event broadcasting for TV Display, and robust modal state management
+- **Customer Recall Workflow** — Dedicated workflow for managing customer callbacks in the queue
+- **Automated Proximity Notifications** — Location-aware alerts to minimize no-shows
+- **QR Standee Print Layout** — Refined A4 print design with rounded corners and optimized spacing for physical standees
+- **Quick Add Feature** — Streamlined registration for anonymous walk-in customers
+- **Public Queue Security** — Tokenized status URLs and date-aware tab recovery for secure ticket tracking
 - **Admin Panel** — Full platform administration with 7 data dashboards (Users, Businesses, Subscriptions, Payments, WA Messages, Queue Entries, Feedback)
 - **Admin Analytics Dashboard** — Platform-wide analytics and KPIs
 - **Business Analytics Dashboard** — Business-level queue performance and traffic insights
@@ -28,6 +36,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Public Queue Pages** — Join queue, ticket status, TV display, and feedback form
 - **Business Hours Configuration** — Configurable operating hours per business
 - **CI/CD Pipelines** — GitHub Actions for automated testing (Pest) and linting (Pint)
+
+### Changed
+- **Architecture Refactoring** — Decoupled business logic into dedicated Service classes (Billing, Marketing, Analytics)
+- **ServicePoint Migration** — Unified legacy Counter/Table architecture into a singular ServicePoint model
+- **Livewire State Management** — Standardized component state using Form Objects
+- **Terminology Updates** — Standardized "Walk-in" to "Anonymous" across the platform
+- **Dynamic Timezone Support** — Improved timezone handling for business operations
+
+### Security
+- Eliminated mass-assignment vulnerabilities on the User model
+- Refactored authentication actions for secure role assignment
+- Hardened service configurations for production cache safety
+- Secured tenant deletion through strict staff access cleanup
+- Fixed enum comparison logic to prevent silent bugs
 
 ### Infrastructure
 - Laravel 13 framework with PHP 8.3+ requirement

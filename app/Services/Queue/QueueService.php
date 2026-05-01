@@ -244,57 +244,12 @@ class QueueService
 
     public function join(Business $business, string $waId): QueueEntry
     {
-        $waId = $this->normalizePhone($waId);
-
-        $this->ensureActiveSubscription($business);
-
-        return DB::transaction(function () use ($business, $waId): QueueEntry {
-            $lockedBusiness = $this->lockBusiness($business);
-
-            $this->ensureQueueOpen($lockedBusiness);
-            $this->ensureDailyLimitNotReached($lockedBusiness);
-
-            $todayCount = QueueEntry::query()
-                ->forBusiness($lockedBusiness->id)
-                ->where('wa_id', $waId)
-                ->whereDate('created_at', now()->toDateString())
-                ->count();
-
-            if ($todayCount >= 3) {
-                throw new RuntimeException('You have reached the maximum queue limit of 3 tickets per day.');
-            }
-
-            $entry = $this->createEntry($lockedBusiness, [
-                'wa_id' => $waId,
-                'source' => 'whatsapp',
-            ]);
-
-            event(new TicketJoined($entry, $lockedBusiness));
-            $this->broadcastQueueMutation($lockedBusiness->id, 'join', $entry->id);
-
-            return $entry;
-        });
+        return app(\App\Actions\Queue\JoinQueueAction::class, ['queueService' => $this])->join($business, $waId);
     }
 
     public function addManual(Business $business): QueueEntry
     {
-        $this->ensureActiveSubscription($business);
-
-        return DB::transaction(function () use ($business): QueueEntry {
-            $lockedBusiness = $this->lockBusiness($business);
-
-            $this->ensureQueueOpen($lockedBusiness);
-            $this->ensureDailyLimitNotReached($lockedBusiness);
-
-            $entry = $this->createEntry($lockedBusiness, [
-                'wa_id' => null,
-                'source' => 'anonymous',
-            ]);
-
-            $this->broadcastQueueMutation($lockedBusiness->id, 'addManual', $entry->id);
-
-            return $entry;
-        });
+        return app(\App\Actions\Queue\JoinQueueAction::class, ['queueService' => $this])->addManual($business);
     }
 
     public function getNextEntry(Business|int $business): ?QueueEntry
@@ -647,7 +602,7 @@ class QueueService
         ];
     }
 
-    private function activateEntry(
+    public function activateEntry(
         Business $business,
         QueueEntry $entry,
         ?ServicePoint $servicePoint,
@@ -678,7 +633,7 @@ class QueueService
         return $freshEntry;
     }
 
-    private function createEntry(Business $business, array $attributes): QueueEntry
+    public function createEntry(Business $business, array $attributes): QueueEntry
     {
         $ticketNumber = $business->current_number + 1;
         $ticketCode = $business->queue_prefix . str_pad((string) $ticketNumber, 3, '0', STR_PAD_LEFT);
@@ -700,7 +655,7 @@ class QueueService
         ]);
     }
 
-    private function ensureActiveSubscription(Business $business): void
+    public function ensureActiveSubscription(Business $business): void
     {
         $subscription = $business->loadMissing('subscription')->subscription;
 
@@ -715,21 +670,21 @@ class QueueService
         }
     }
 
-    private function ensureQueueOpen(Business $business): void
+    public function ensureQueueOpen(Business $business): void
     {
         if ($business->queue_status !== BusinessQueueStatus::OPEN->value) {
             throw new RuntimeException('The queue is currently closed.');
         }
     }
 
-    private function ensureDailyLimitNotReached(Business $business): void
+    public function ensureDailyLimitNotReached(Business $business): void
     {
         if ($business->daily_limit > 0 && $business->entries_today >= $business->daily_limit) {
             throw new RuntimeException("Queue limit reached for today ({$business->daily_limit} tickets).");
         }
     }
 
-    private function notifyUpcomingEntry(Business $business): void
+    public function notifyUpcomingEntry(Business $business): void
     {
         $notifyTurnsBefore = $business->notify_turns_before ?? 3;
 
@@ -811,7 +766,7 @@ class QueueService
         ];
     }
 
-    private function broadcastQueueMutation(
+    public function broadcastQueueMutation(
         int $businessId,
         string $action,
         ?int $entryId = null,
@@ -820,7 +775,7 @@ class QueueService
         event(new QueueUpdated($businessId, $action, $entryId, $servicePointId));
     }
 
-    private function lockBusiness(Business|int $business): Business
+    public function lockBusiness(Business|int $business): Business
     {
         $businessId = $business instanceof Business ? $business->id : $business;
 
@@ -831,7 +786,7 @@ class QueueService
             ->firstOrFail();
     }
 
-    private function lockEntry(int|QueueEntry $entry): QueueEntry
+    public function lockEntry(int|QueueEntry $entry): QueueEntry
     {
         $entryId = $entry instanceof QueueEntry ? $entry->id : $entry;
 
@@ -842,7 +797,7 @@ class QueueService
             ->firstOrFail();
     }
 
-    private function lockServicePointIfNeeded(Business $business, ?int $servicePointId, bool $requireAvailable): ?ServicePoint
+    public function lockServicePointIfNeeded(Business $business, ?int $servicePointId, bool $requireAvailable): ?ServicePoint
     {
         if (!$servicePointId || !$this->canUseServicePoints($business)) {
             return null;
@@ -877,7 +832,7 @@ class QueueService
         return $servicePoint;
     }
 
-    private function releaseServicePointById(int $servicePointId): void
+    public function releaseServicePointById(int $servicePointId): void
     {
         ServicePoint::query()
             ->whereKey($servicePointId)
@@ -885,7 +840,7 @@ class QueueService
             ->update(['status' => TableStatus::FREE->value]);
     }
 
-    private function normalizePhone(string $phone): string
+    public function normalizePhone(string $phone): string
     {
         $digits = preg_replace('/\D/', '', $phone) ?? '';
 

@@ -74,6 +74,6 @@ class TvDisplay extends Component
     public function render()
     {
         return view('livewire.public-queue.tv-display')
-            ->layout('layouts.public');
+            ->layout('layouts.tv');
     }
 }
