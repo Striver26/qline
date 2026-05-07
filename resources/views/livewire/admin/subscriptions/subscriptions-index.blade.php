@@ -64,9 +64,10 @@
             
             <div class="space-y-4 mb-6">
                 <flux:select label="Billing Cycle" wire:model="editType" required>
-                    <option value="daily">Daily Routing</option>
-                    <option value="monthly">Monthly Cycle</option>
-                    <option value="advanced">Advanced Tier</option>
+                    <option value="free">Free Plan</option>
+                    <option value="daily">Daily Pass</option>
+                    <option value="monthly">Growth Tier</option>
+                    <option value="advanced">Scale Tier</option>
                 </flux:select>
                 
                 <flux:select label="System Status" wire:model="editStatus" required>

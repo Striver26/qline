@@ -10,6 +10,7 @@ class Subscription extends Model
     protected $fillable = [
         'business_id',
         'type',
+        'billing_cycle',
         'status',
         'starts_at',
         'expires_at',

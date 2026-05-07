@@ -1,12 +1,13 @@
 <?php
 
+use App\Enums\BusinessQueueStatus;
+use App\Enums\QueueStatus;
+use App\Enums\TableStatus;
+use App\Models\Queue\QueueEntry;
 use App\Models\Tenant\Business;
 use App\Models\Tenant\ServicePoint;
 use App\Models\Tenant\Subscription;
-use App\Models\Queue\QueueEntry;
 use App\Services\Queue\QueueService;
-use App\Enums\QueueStatus;
-use App\Enums\TableStatus;
 
 beforeEach(function () {
     $this->business = Business::create([
@@ -14,7 +15,7 @@ beforeEach(function () {
         'slug' => 'test-business',
         'join_code' => 'JOIN01',
         'queue_prefix' => 'T',
-        'queue_status' => \App\Enums\BusinessQueueStatus::OPEN->value,
+        'queue_status' => BusinessQueueStatus::OPEN->value,
         'current_number' => 0,
         'entries_today' => 0,
         'daily_limit' => 100,
@@ -30,7 +31,7 @@ beforeEach(function () {
         'expires_at' => now()->addYear(),
     ]);
 
-    $this->service = new QueueService();
+    $this->service = new QueueService;
 });
 
 // --- Join Queue ---
@@ -47,13 +48,13 @@ it('can join an open queue', function () {
 });
 
 it('rejects joining a closed queue', function () {
-    $this->business->update(['queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value]);
+    $this->business->update(['queue_status' => BusinessQueueStatus::CLOSED->value]);
 
     $this->service->join($this->business, '60123456789');
 })->throws(Exception::class, 'The queue is currently closed.');
 
 it('rejects joining a paused queue', function () {
-    $this->business->update(['queue_status' => \App\Enums\BusinessQueueStatus::PAUSED->value]);
+    $this->business->update(['queue_status' => BusinessQueueStatus::PAUSED->value]);
 
     $this->service->join($this->business, '60123456789');
 })->throws(Exception::class, 'The queue is currently closed.');
@@ -136,7 +137,7 @@ it('assigns a waiting ticket to a servicePoint and marks the servicePoint occupi
 });
 
 it('calls a specific waiting ticket to a selected servicePoint', function () {
-    config()->set('qline.tiers.daily.counters', true);
+    config()->set('qline.tiers.daily.service_points', true);
 
     $servicePoint = ServicePoint::create([
         'business_id' => $this->business->id,
@@ -237,7 +238,7 @@ it('cancels all active tickets and resets servicePoints when queue is closed', f
 
     $this->business->update([
         'current_number' => 10,
-        'entries_today' => 10
+        'entries_today' => 10,
     ]);
 
     $this->service->closeQueue($this->business->refresh());
@@ -248,7 +249,7 @@ it('cancels all active tickets and resets servicePoints when queue is closed', f
 
     expect($e1->status)->toBe(QueueStatus::CANCELLED->value);
     expect($e2->status)->toBe(QueueStatus::CANCELLED->value);
-    expect($this->business->queue_status)->toBe(\App\Enums\BusinessQueueStatus::CLOSED->value);
+    expect($this->business->queue_status)->toBe(BusinessQueueStatus::CLOSED->value);
     expect($this->business->current_number)->toBe(10);
     expect($this->business->entries_today)->toBe(10);
 });
@@ -275,13 +276,13 @@ it('opens queue and resets daily servicePoints', function () {
     $this->service->openQueue($this->business->refresh());
     $this->business->refresh();
 
-    expect($this->business->queue_status)->toBe(\App\Enums\BusinessQueueStatus::OPEN->value);
+    expect($this->business->queue_status)->toBe(BusinessQueueStatus::OPEN->value);
     expect($this->business->current_number)->toBe(0);
     expect($this->business->entries_today)->toBe(0);
 });
 
 it('rejects opening queue without active subscription', function () {
-    $this->business->update(['queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value]);
+    $this->business->update(['queue_status' => BusinessQueueStatus::CLOSED->value]);
     $this->business->subscription()->delete();
 
     $this->service->openQueue($this->business->refresh());
@@ -293,7 +294,7 @@ it('pauses queue with a reason', function () {
     $this->service->pauseQueue($this->business, 'Lunch break');
     $this->business->refresh();
 
-    expect($this->business->queue_status)->toBe(\App\Enums\BusinessQueueStatus::PAUSED->value);
+    expect($this->business->queue_status)->toBe(BusinessQueueStatus::PAUSED->value);
     expect($this->business->pause_reason)->toBe('Lunch break');
 });
 

@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\Tenant\Business;
+use App\Enums\BusinessQueueStatus;
+use App\Enums\SubTier;
 use App\Livewire\Forms\BusinessSettingsForm;
+use App\Models\Tenant\Business;
+use App\Models\User;
+use App\Services\Billing\SubscriptionService;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class BusinessSettings extends Component
 {
@@ -24,9 +28,10 @@ class BusinessSettings extends Component
         $this->form->validate();
         $business = $user->getActiveBusiness();
 
-        if (!$business) {
+        if (! $business) {
             $this->createBusinessAccount($user);
             session()->flash('success', 'Business settings successfully saved. You are ready to open your queue.');
+
             return redirect()->route('business.dashboard');
         }
 
@@ -34,7 +39,7 @@ class BusinessSettings extends Component
         $this->dispatch('profile-updated', name: $user->name);
     }
 
-    private function createBusinessAccount(\App\Models\User $user): void
+    private function createBusinessAccount(User $user): void
     {
         $business = Business::create([
             'name' => $this->form->name,
@@ -48,13 +53,22 @@ class BusinessSettings extends Component
             'postcode' => $this->form->postcode,
             'business_hours' => $this->form->business_hours,
             'timezone' => $this->form->timezone,
-            'queue_status' => \App\Enums\BusinessQueueStatus::CLOSED->value,
+            'queue_status' => BusinessQueueStatus::CLOSED->value,
+            'daily_limit' => config('qline.tiers.free.daily_limit', 50),
             'is_active' => true,
         ]);
 
+        $subscription = $business->subscription()->create([
+            'type' => SubTier::FREE->value,
+            'billing_cycle' => 'free',
+            'status' => 'active',
+        ]);
+
+        app(SubscriptionService::class)->activateSubscription($subscription);
+
         $user->update([
             'business_id' => $business->id,
-            'profile_completed' => true
+            'profile_completed' => true,
         ]);
     }
 

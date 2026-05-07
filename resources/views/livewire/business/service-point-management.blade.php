@@ -27,13 +27,18 @@
                 <div>
                     <p class="metric-label">Service Points</p>
                     <h2 class="mt-2 text-2xl font-bold tracking-[-0.05em] text-slate-950 dark:text-white">Add a Service Point</h2>
+                    @if($servicePointLimit > 0)
+                        <p class="mt-2 text-sm text-slate-500">
+                            Your current plan allows {{ $servicePointLimit }} service point{{ $servicePointLimit === 1 ? '' : 's' }}.
+                        </p>
+                    @endif
                 </div>
 
                 <div class="flex flex-col items-end gap-4 sm:flex-row">
                     <div class="flex-1">
                         <flux:input wire:model="newName" label="Service Point Name" placeholder="e.g. Reception, Table 1, Room A..." />
                     </div>
-                    <flux:button type="submit" variant="primary" class="rounded-full px-6">
+                    <flux:button type="submit" variant="primary" class="rounded-full px-6" :disabled="$servicePointLimit > 0 && $servicePoints->count() >= $servicePointLimit">
                         <flux:icon.plus class="mr-2 h-4 w-4" />
                         Add Service Point
                     </flux:button>

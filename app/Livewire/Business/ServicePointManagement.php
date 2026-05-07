@@ -3,7 +3,6 @@
 namespace App\Livewire\Business;
 
 use App\Enums\QueueStatus;
-use App\Enums\TableStatus;
 use App\Models\Tenant\Business;
 use Livewire\Component;
 
@@ -27,9 +26,12 @@ class ServicePointManagement extends Component
 
     public $editTableName = '';
 
+    public int $servicePointLimit = 0;
+
     public function mount()
     {
-        $this->business = auth()->user()->getActiveBusiness();
+        $this->business = auth()->user()->getActiveBusiness()->loadMissing('subscription');
+        $this->servicePointLimit = $this->resolveServicePointLimit();
         $this->loadServicePoints();
     }
 
@@ -45,14 +47,15 @@ class ServicePointManagement extends Component
     {
         $this->validate(['newName' => 'required|string|max:255']);
 
-        if ($this->servicePoints->count() >= 20) {
-            session()->flash('error', 'Maximum limit of 20 service points reached.');
+        if ($this->servicePointLimit > 0 && $this->servicePoints->count() >= $this->servicePointLimit) {
+            session()->flash('error', "Your current plan allows {$this->servicePointLimit} service point(s). Upgrade to add more.");
+
             return;
         }
 
         $this->business->servicePoints()->create([
             'name' => $this->newName,
-            'type' => 'counter', // Default type, could be made configurable in UI later
+            'type' => 'service_point',
             'is_active' => true,
         ]);
 
@@ -64,6 +67,17 @@ class ServicePointManagement extends Component
     public function toggleServicePoint($id)
     {
         $servicePoint = $this->business->servicePoints()->findOrFail($id);
+
+        if (! $servicePoint->is_active && $this->servicePointLimit > 0) {
+            $activeCount = $this->business->servicePoints()->where('is_active', true)->count();
+
+            if ($activeCount >= $this->servicePointLimit) {
+                session()->flash('error', "Your current plan allows {$this->servicePointLimit} active service point(s).");
+
+                return;
+            }
+        }
+
         $servicePoint->update(['is_active' => ! $servicePoint->is_active]);
         $this->loadServicePoints();
     }
@@ -93,6 +107,7 @@ class ServicePointManagement extends Component
 
         if ($servicePoint->queueEntries()->whereIn('status', [QueueStatus::CALLED->value, QueueStatus::SERVING->value])->exists()) {
             session()->flash('error', 'Cannot delete a service point that is currently serving customers.');
+
             return;
         }
 
@@ -103,7 +118,16 @@ class ServicePointManagement extends Component
 
     public function render()
     {
-        return view('livewire.business.service-point-management')
+        return view('livewire.business.service-point-management', [
+            'servicePointLimit' => $this->servicePointLimit,
+        ])
             ->layout('layouts.app');
+    }
+
+    private function resolveServicePointLimit(): int
+    {
+        $tier = $this->business->subscription?->type?->value ?? 'free';
+
+        return (int) config("qline.tiers.{$tier}.service_point_limit", 0);
     }
 }

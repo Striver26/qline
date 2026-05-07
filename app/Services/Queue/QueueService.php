@@ -2,12 +2,12 @@
 
 namespace App\Services\Queue;
 
+use App\Actions\Queue\JoinQueueAction;
 use App\Enums\BusinessQueueStatus;
 use App\Enums\QueueStatus;
 use App\Enums\TableStatus;
 use App\Events\QueueUpdated;
 use App\Events\TicketCompleted;
-use App\Events\TicketJoined;
 use App\Events\TicketStatusUpdated;
 use App\Models\Queue\QueueEntry;
 use App\Models\Tenant\Business;
@@ -95,7 +95,7 @@ class QueueService
 
         $averageServiceMinutes = $this->getAverageServiceMinutes($business->id);
         $activeByServicePoint = $activeEntries
-            ->filter(fn(QueueEntry $entry) => $entry->service_point_id !== null)
+            ->filter(fn (QueueEntry $entry) => $entry->service_point_id !== null)
             ->keyBy('service_point_id');
 
         $formattedWaitingEntries = $waitingEntries
@@ -117,14 +117,14 @@ class QueueService
 
         $formattedActiveEntries = $activeEntries
             ->values()
-            ->map(fn(QueueEntry $entry): array => $this->formatActiveEntry($entry))
+            ->map(fn (QueueEntry $entry): array => $this->formatActiveEntry($entry))
             ->all();
 
         $formattedServicePoints = $servicePoints
             ->values()
             ->map(function (ServicePoint $servicePoint) use ($activeByServicePoint): array {
                 $currentEntry = $activeByServicePoint->get($servicePoint->id);
-                $isFree = $servicePoint->status === TableStatus::FREE->value && !$currentEntry;
+                $isFree = $servicePoint->status === TableStatus::FREE->value && ! $currentEntry;
 
                 return [
                     'id' => $servicePoint->id,
@@ -176,7 +176,7 @@ class QueueService
         $today = now()->startOfDay();
         $lastReset = $business->last_reset_at ? $business->last_reset_at->startOfDay() : null;
 
-        if (!$lastReset || $lastReset->lt($today)) {
+        if (! $lastReset || $lastReset->lt($today)) {
             $business->update([
                 'current_number' => 0,
                 'entries_today' => 0,
@@ -245,12 +245,12 @@ class QueueService
 
     public function join(Business $business, string $waId): QueueEntry
     {
-        return app(\App\Actions\Queue\JoinQueueAction::class, ['queueService' => $this])->join($business, $waId);
+        return app(JoinQueueAction::class, ['queueService' => $this])->join($business, $waId);
     }
 
     public function addManual(Business $business): QueueEntry
     {
-        return app(\App\Actions\Queue\JoinQueueAction::class, ['queueService' => $this])->addManual($business);
+        return app(JoinQueueAction::class, ['queueService' => $this])->addManual($business);
     }
 
     public function getNextEntry(Business|int $business): ?QueueEntry
@@ -282,7 +282,7 @@ class QueueService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$nextEntry) {
+            if (! $nextEntry) {
                 return null;
             }
 
@@ -317,7 +317,7 @@ class QueueService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$entry) {
+            if (! $entry) {
                 throw new RuntimeException('Only waiting tickets can be called to a service point.');
             }
 
@@ -342,7 +342,7 @@ class QueueService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$entry) {
+            if (! $entry) {
                 throw new ModelNotFoundException('Queue entry not found.');
             }
 
@@ -361,7 +361,7 @@ class QueueService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$servicePoint) {
+            if (! $servicePoint) {
                 throw new RuntimeException('Selected service point could not be found.');
             }
 
@@ -400,7 +400,7 @@ class QueueService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (!in_array($entry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+            if (! in_array($entry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
                 throw new RuntimeException('Only active tickets can be reassigned to another service point.');
             }
 
@@ -422,7 +422,7 @@ class QueueService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$targetServicePoint) {
+            if (! $targetServicePoint) {
                 throw new RuntimeException('Target service point is unavailable.');
             }
 
@@ -497,7 +497,7 @@ class QueueService
         return DB::transaction(function () use ($entry): QueueEntry {
             $lockedEntry = $this->lockEntry($entry);
 
-            if (!in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+            if (! in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
                 throw new RuntimeException('Only active tickets can be completed.');
             }
 
@@ -536,7 +536,7 @@ class QueueService
     {
         $lockedEntry = $this->lockEntry($entry);
 
-        if (!in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+        if (! in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
             throw new RuntimeException('Only active tickets can be recalled.');
         }
 
@@ -544,7 +544,7 @@ class QueueService
 
         // Re-fire event to trigger sound/WhatsApp/TV
         event(new TicketStatusUpdated($lockedEntry, $business));
-        
+
         $this->broadcastQueueMutation(
             $business->id,
             'recall',
@@ -560,7 +560,7 @@ class QueueService
         return DB::transaction(function () use ($entry): QueueEntry {
             $lockedEntry = $this->lockEntry($entry);
 
-            if (!in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
+            if (! in_array($lockedEntry->status, [QueueStatus::CALLED->value, QueueStatus::SERVING->value], true)) {
                 throw new RuntimeException('Only active tickets can be skipped.');
             }
 
@@ -593,7 +593,7 @@ class QueueService
         return DB::transaction(function () use ($entry): QueueEntry {
             $lockedEntry = $this->lockEntry($entry);
 
-            if (!in_array($lockedEntry->status, [QueueStatus::WAITING->value, QueueStatus::CALLED->value], true)) {
+            if (! in_array($lockedEntry->status, [QueueStatus::WAITING->value, QueueStatus::CALLED->value], true)) {
                 throw new RuntimeException('Only waiting or called tickets can be cancelled.');
             }
 
@@ -626,7 +626,7 @@ class QueueService
         return DB::transaction(function () use ($entry): QueueEntry {
             $lockedEntry = $this->lockEntry($entry);
 
-            if (!in_array($lockedEntry->status, [QueueStatus::SKIPPED->value, QueueStatus::CANCELLED->value], true)) {
+            if (! in_array($lockedEntry->status, [QueueStatus::SKIPPED->value, QueueStatus::CANCELLED->value], true)) {
                 throw new RuntimeException('Only skipped or cancelled tickets can be rejoined.');
             }
 
@@ -712,7 +712,7 @@ class QueueService
     public function createEntry(Business $business, array $attributes): QueueEntry
     {
         $ticketNumber = $business->current_number + 1;
-        $ticketCode = $business->queue_prefix . str_pad((string) $ticketNumber, 3, '0', STR_PAD_LEFT);
+        $ticketCode = $business->queue_prefix.str_pad((string) $ticketNumber, 3, '0', STR_PAD_LEFT);
 
         $business->update([
             'current_number' => $ticketNumber,
@@ -736,7 +736,7 @@ class QueueService
         $subscription = $business->loadMissing('subscription')->subscription;
 
         if (
-            !$subscription
+            ! $subscription
             || $subscription->status !== 'active'
             || ($subscription->expires_at && $subscription->expires_at->isPast())
         ) {
@@ -775,7 +775,7 @@ class QueueService
             ->offset($notifyTurnsBefore - 1)
             ->first();
 
-        if (!$upcomingEntry || !$upcomingEntry->wa_id) {
+        if (! $upcomingEntry || ! $upcomingEntry->wa_id) {
             return;
         }
 
@@ -802,7 +802,7 @@ class QueueService
                     ->orderByDesc('id')
                     ->limit(25)
                     ->get()
-                    ->avg(fn(QueueEntry $entry): int => $entry->completed_at->diffInSeconds($entry->called_at));
+                    ->avg(fn (QueueEntry $entry): int => $entry->completed_at->diffInSeconds($entry->called_at));
 
                 return $seconds ? max(1, (int) ceil($seconds / 60)) : 5;
             },
@@ -818,11 +818,11 @@ class QueueService
     {
         $tier = $business->loadMissing('subscription')->subscription?->type?->value;
 
-        if (!$tier) {
+        if (! $tier) {
             return false;
         }
 
-        return (bool) config("qline.tiers.{$tier}.counters", false);
+        return (bool) config("qline.tiers.{$tier}.service_points", false);
     }
 
     private function formatActiveEntry(QueueEntry $entry): array
@@ -875,7 +875,7 @@ class QueueService
 
     public function lockServicePointIfNeeded(Business $business, ?int $servicePointId, bool $requireAvailable): ?ServicePoint
     {
-        if (!$servicePointId || !$this->canUseServicePoints($business)) {
+        if (! $servicePointId || ! $this->canUseServicePoints($business)) {
             return null;
         }
 
@@ -886,11 +886,11 @@ class QueueService
             ->lockForUpdate()
             ->first();
 
-        if (!$servicePoint) {
+        if (! $servicePoint) {
             throw new RuntimeException('Selected service point is unavailable.');
         }
 
-        if (!$requireAvailable) {
+        if (! $requireAvailable) {
             return $servicePoint;
         }
 
@@ -921,7 +921,7 @@ class QueueService
         $digits = preg_replace('/\D/', '', $phone) ?? '';
 
         if (str_starts_with($digits, '0')) {
-            $digits = '60' . substr($digits, 1);
+            $digits = '60'.substr($digits, 1);
         }
 
         return $digits;

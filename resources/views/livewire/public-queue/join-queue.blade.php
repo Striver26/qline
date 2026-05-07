@@ -25,7 +25,7 @@
                 <h3 class="mt-4 text-3xl font-bold tracking-[-0.05em]">Get your ticket, then track your turn live.</h3>
                 <div class="mt-6 grid gap-3 text-sm text-white/82">
                     <div class="rounded-[1.2rem] border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
-                        Scan once, take a ticket, and avoid waiting near the counter.
+                        Scan once, take a ticket, and avoid waiting near the service point.
                     </div>
                     <div class="rounded-[1.2rem] border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
                         Add your WhatsApp number to receive a nudge when you are close.
@@ -106,7 +106,7 @@
                     </div>
                     <div class="soft-card">
                         <p class="metric-label">Live Tracking</p>
-                        <p class="mt-3 text-sm font-semibold text-slate-800">You can leave the counter area and still follow the queue.</p>
+                        <p class="mt-3 text-sm font-semibold text-slate-800">You can leave the service point area and still follow the queue.</p>
                     </div>
                 </div>
             </div>

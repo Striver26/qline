@@ -3,16 +3,16 @@
 namespace App\Console\Commands;
 
 use App\Models\Tenant\Business;
-use App\Enums\QueueStatus;
+use App\Services\Queue\QueueService;
 use Illuminate\Console\Command;
 
 class ResetDailyQueues extends Command
 {
     protected $signature = 'queue:reset-daily';
 
-    protected $description = 'Reset daily queue counters for all businesses and close any open queues';
+    protected $description = 'Reset daily queue numbers for all businesses and close any open queues';
 
-    public function handle(\App\Services\Queue\QueueService $queueService): int
+    public function handle(QueueService $queueService): int
     {
         $businesses = Business::all();
         $closedCount = 0;
@@ -21,7 +21,7 @@ class ResetDailyQueues extends Command
 
         foreach ($businesses as $business) {
             $isStale = false;
-            
+
             // Check if business has recent activity (tickets in last 4 hours)
             $lastEntry = $business->queueEntries()->latest()->first();
             $hasRecentActivity = $lastEntry && $lastEntry->created_at->gt(now()->subHours(4));
@@ -30,20 +30,21 @@ class ResetDailyQueues extends Command
                 if ($hasRecentActivity) {
                     $this->info("Skipping active business: {$business->name} (Last ticket at {$lastEntry->created_at})");
                     $skippedCount++;
+
                     continue;
                 }
-                
+
                 // If not active, force close it
                 $queueService->closeQueue($business);
                 $this->info("Force closed stale queue for: {$business->name}");
                 $closedCount++;
                 $resetCount++;
             } else {
-                // Business is already closed, just ensure counters are reset for the new day
+                // Business is already closed, just ensure queue numbers are reset for the new day
                 $today = now()->startOfDay();
                 $lastReset = $business->last_reset_at ? $business->last_reset_at->startOfDay() : null;
 
-                if (!$lastReset || $lastReset->lt($today)) {
+                if (! $lastReset || $lastReset->lt($today)) {
                     $business->update([
                         'current_number' => 0,
                         'entries_today' => 0,

@@ -30,30 +30,45 @@ return [
     |--------------------------------------------------------------------------
     | Subscription Tiers
     |--------------------------------------------------------------------------
-    | daily     = RM10/day   — limited daily queue limit, no counters
-    | monthly   = RM300/month — same as daily features, monthly billing
-    | advanced  = RM450/month — unlimited daily limit, counter support
+    | free      = RM0         — limited queue usage, one service point
+    | daily     = RM10/day    — daily pass with one service point
+    | monthly   = RM55/month  — growth plan with monthly/yearly billing
+    | advanced  = RM119/month — scale plan with monthly/yearly billing
     */
     'tiers' => [
+        'free' => [
+            'price' => 0.00,
+            'yearly_price' => 0.00,
+            'label' => 'Free',
+            'daily_limit' => 50,
+            'service_point_limit' => 1,
+            'service_points' => true,
+            'billing_cycle' => 'free',
+        ],
         'daily' => [
             'price' => 10.00,
             'label' => 'Daily',
             'daily_limit' => 100,
-            'counters' => false,
+            'service_point_limit' => 1,
+            'service_points' => true,
             'billing_cycle' => 'daily',
         ],
         'monthly' => [
-            'price' => 300.00,
-            'label' => 'Monthly',
+            'price' => 55.00,
+            'yearly_price' => 528.00,
+            'label' => 'Growth',
             'daily_limit' => 500,
-            'counters' => false,
+            'service_point_limit' => 5,
+            'service_points' => true,
             'billing_cycle' => 'monthly',
         ],
         'advanced' => [
-            'price' => 450.00,
-            'label' => 'Advanced',
+            'price' => 119.00,
+            'yearly_price' => 1142.40,
+            'label' => 'Scale',
             'daily_limit' => 0, // 0 = unlimited
-            'counters' => true,
+            'service_point_limit' => 0, // 0 = unlimited
+            'service_points' => true,
             'billing_cycle' => 'monthly',
         ],
     ],
