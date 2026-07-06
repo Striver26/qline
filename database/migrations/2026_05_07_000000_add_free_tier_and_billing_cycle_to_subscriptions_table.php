@@ -18,13 +18,22 @@ return new class extends Migration
 
         Schema::table('subscriptions', function (Blueprint $table) {
             if (! Schema::hasColumn('subscriptions', 'billing_cycle')) {
-                $table->string('billing_cycle')->default('monthly')->after('type');
+                $table->string('billing_cycle')->default('free')->after('type');
             }
         });
 
         DB::table('subscriptions')
+            ->where('type', 'free')
+            ->update(['billing_cycle' => 'free']);
+
+        DB::table('subscriptions')
             ->where('type', 'daily')
             ->update(['billing_cycle' => 'daily']);
+
+        DB::table('subscriptions')
+            ->whereIn('type', ['monthly', 'advanced'])
+            ->whereNotIn('billing_cycle', ['monthly', 'yearly'])
+            ->update(['billing_cycle' => 'monthly']);
 
     }
 

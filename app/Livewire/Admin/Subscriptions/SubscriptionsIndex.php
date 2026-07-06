@@ -3,6 +3,7 @@ namespace App\Livewire\Admin\Subscriptions;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Tenant\Subscription;
+use App\Services\Billing\SubscriptionService;
 
 class SubscriptionsIndex extends Component
 {
@@ -10,6 +11,7 @@ class SubscriptionsIndex extends Component
     
     public $editingSubId = null;
     public $editType = '';
+    public $editBillingCycle = 'free';
     public $editStatus = '';
     public $editExpiresAt = '';
     
@@ -24,6 +26,7 @@ class SubscriptionsIndex extends Component
         $sub = Subscription::findOrFail($id);
         $this->editingSubId = $sub->id;
         $this->editType = $sub->type->value;
+        $this->editBillingCycle = app(SubscriptionService::class)->billingCycleFor($this->editType, $sub->billing_cycle);
         $this->editStatus = $sub->status;
         $this->editExpiresAt = $sub->expires_at ? $sub->expires_at->format('Y-m-d') : '';
         $this->dispatch('modal-show', name: 'edit-subscription');
@@ -32,11 +35,27 @@ class SubscriptionsIndex extends Component
     public function updateSub()
     {
         $sub = Subscription::findOrFail($this->editingSubId);
+        $cycle = app(SubscriptionService::class)->billingCycleFor($this->editType, $this->editBillingCycle);
+        $status = $this->editType === 'free' ? 'active' : $this->editStatus;
+        $expiresAt = $cycle === 'free' || ! $this->editExpiresAt
+            ? null
+            : \Carbon\Carbon::parse($this->editExpiresAt);
+
         $sub->update([
             'type' => $this->editType,
-            'status' => $this->editStatus,
-            'expires_at' => $this->editExpiresAt ? \Carbon\Carbon::parse($this->editExpiresAt) : null,
+            'billing_cycle' => $cycle,
+            'status' => $status,
+            'expires_at' => $expiresAt,
         ]);
+
+        if ($status === 'active') {
+            app(SubscriptionService::class)->activateSubscription($sub);
+
+            if ($expiresAt) {
+                $sub->update(['expires_at' => $expiresAt]);
+            }
+        }
+
         $this->dispatch('modal-close', name: 'edit-subscription');
         session()->flash('status', "Subscription matrix actively re-routed.");
     }

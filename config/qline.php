@@ -31,9 +31,9 @@ return [
     | Subscription Tiers
     |--------------------------------------------------------------------------
     | free      = RM0         — limited queue usage, one service point
-    | daily     = RM10/day    — daily pass with one service point
-    | monthly   = RM55/month  — growth plan with monthly/yearly billing
-    | advanced  = RM119/month — scale plan with monthly/yearly billing
+    | daily     = RM99/day    — daily pass with three service point
+    | monthly   = RM69/month  — growth plan with monthly/yearly billing
+    | advanced  = RM149/month — scale plan with monthly/yearly billing
     */
     'tiers' => [
         'free' => [
@@ -46,15 +46,15 @@ return [
             'billing_cycle' => 'free',
         ],
         'daily' => [
-            'price' => 10.00,
+            'price' => 99.00,
             'label' => 'Daily',
-            'daily_limit' => 100,
-            'service_point_limit' => 1,
+            'daily_limit' => 0,
+            'service_point_limit' => 3,
             'service_points' => true,
             'billing_cycle' => 'daily',
         ],
         'monthly' => [
-            'price' => 55.00,
+            'price' => 69.00,
             'yearly_price' => 528.00,
             'label' => 'Growth',
             'daily_limit' => 500,
@@ -63,7 +63,7 @@ return [
             'billing_cycle' => 'monthly',
         ],
         'advanced' => [
-            'price' => 119.00,
+            'price' => 149.00,
             'yearly_price' => 1142.40,
             'label' => 'Scale',
             'daily_limit' => 0, // 0 = unlimited

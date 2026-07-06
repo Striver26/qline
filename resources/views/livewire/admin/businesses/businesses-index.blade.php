@@ -110,6 +110,13 @@
                     @endforeach
                 </flux:select>
 
+                <flux:select label="Billing Cycle" wire:model="editSubBillingCycle" required>
+                    <option value="free">Free</option>
+                    <option value="daily">Daily</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </flux:select>
+
                 <flux:select label="Status" wire:model="editSubStatus" required>
                     <option value="pending">Pending</option>
                     <option value="active">Active</option>
@@ -117,7 +124,7 @@
                     <option value="canceled">Canceled</option>
                 </flux:select>
 
-                <flux:input type="datetime-local" label="Expires At" wire:model="editSubExpiresAt" required />
+                <flux:input type="datetime-local" label="Expires At" wire:model="editSubExpiresAt" />
             </div>
 
             <div class="mt-6 flex justify-end gap-3">

@@ -56,6 +56,7 @@ class MonthlyBusinessSeeder extends Seeder
             ['business_id' => $business->id],
             [
                 'type' => SubTier::MONTHLY,
+                'billing_cycle' => 'monthly',
                 'status' => 'active',
                 'starts_at' => now()->subWeeks(2),
                 'expires_at' => now()->addWeeks(2),

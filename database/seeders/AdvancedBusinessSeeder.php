@@ -56,6 +56,7 @@ class AdvancedBusinessSeeder extends Seeder
             ['business_id' => $business->id],
             [
                 'type' => SubTier::ADVANCED,
+                'billing_cycle' => 'monthly',
                 'status' => 'active',
                 'starts_at' => now()->subMonth(),
                 'expires_at' => now()->addMonth(),

@@ -8,6 +8,39 @@ use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {
+    public function ensureActiveOrFreeSubscription(Business $business): Subscription
+    {
+        $subscription = $business->loadMissing('subscription')->subscription;
+
+        if (
+            $subscription
+            && $subscription->status === 'active'
+            && (! $subscription->expires_at || $subscription->expires_at->isFuture())
+        ) {
+            return $subscription;
+        }
+
+        return $this->activateFreeSubscription($business);
+    }
+
+    public function activateFreeSubscription(Business $business): Subscription
+    {
+        $subscription = $business->subscription()->updateOrCreate(
+            ['business_id' => $business->id],
+            [
+                'type' => 'free',
+                'billing_cycle' => 'free',
+                'status' => 'active',
+                'starts_at' => now(),
+                'expires_at' => null,
+            ]
+        );
+
+        $this->activateSubscription($subscription);
+
+        return $subscription->refresh();
+    }
+
     /**
      * Activate the attached subscription based on configuration tiers.
      */
@@ -19,9 +52,7 @@ class SubscriptionService
 
         $tier = $subscription->type->value ?? $subscription->type;
         $tierConfig = config("qline.tiers.{$tier}", []);
-        $billingCycle = $tier === 'free'
-            ? 'free'
-            : ($subscription->billing_cycle ?: ($tierConfig['billing_cycle'] ?? 'monthly'));
+        $billingCycle = $this->billingCycleFor($tier, $subscription->billing_cycle);
 
         $expiresAt = match ($billingCycle) {
             'free' => null,
@@ -31,6 +62,7 @@ class SubscriptionService
         };
 
         $subscription->update([
+            'billing_cycle' => $billingCycle,
             'status' => 'active',
             'starts_at' => now(),
             'expires_at' => $expiresAt,
@@ -51,6 +83,18 @@ class SubscriptionService
             'billing_cycle' => $billingCycle,
             'expires_at' => $expiresAt,
         ]);
+    }
+
+    public function billingCycleFor(string $tier, ?string $requestedCycle = null): string
+    {
+        return match ($tier) {
+            'free' => 'free',
+            'daily' => 'daily',
+            'monthly', 'advanced' => in_array($requestedCycle, ['monthly', 'yearly'], true)
+                ? $requestedCycle
+                : (string) config("qline.tiers.{$tier}.billing_cycle", 'monthly'),
+            default => $requestedCycle ?: 'monthly',
+        };
     }
 
     private function enforceServicePointLimit(Business $business, int $limit): void

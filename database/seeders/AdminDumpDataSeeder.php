@@ -50,7 +50,8 @@ class AdminDumpDataSeeder extends Seeder
             // Create Subscription
             Subscription::create([
                 'business_id' => $business->id,
-                'type' => $faker->randomElement(['daily', 'monthly']),
+                'type' => $type = $faker->randomElement(['daily', 'monthly']),
+                'billing_cycle' => $type === 'daily' ? 'daily' : 'monthly',
                 'status' => $faker->randomElement(['active', 'expired', 'cancelled']),
                 'starts_at' => now()->subDays(rand(1, 30)),
                 'expires_at' => now()->addDays(rand(10, 60)),

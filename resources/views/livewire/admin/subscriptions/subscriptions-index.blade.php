@@ -24,6 +24,7 @@
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>Business</flux:table.column>
+                <flux:table.column>Plan</flux:table.column>
                 <flux:table.column>Cycle</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
                 <flux:table.column>Starts At</flux:table.column>
@@ -35,6 +36,7 @@
                     <flux:table.row>
                         <flux:table.cell class="font-semibold text-slate-800 dark:text-slate-100">{{$sub->business->name ?? 'Unknown'}}</flux:table.cell>
                         <flux:table.cell class="capitalize">{{$sub->type->value}}</flux:table.cell>
+                        <flux:table.cell class="capitalize">{{$sub->billing_cycle ?? '-'}}</flux:table.cell>
                         <flux:table.cell>
                             <span class="badge-pill badge-pill--brand">{{$sub->status}}</span>
                         </flux:table.cell>
@@ -50,7 +52,7 @@
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
-                    <flux:table.row><flux:table.cell colspan="5" class="text-center py-8 text-slate-500">No subscriptions found.</flux:table.cell></flux:table.row>
+                    <flux:table.row><flux:table.cell colspan="7" class="text-center py-8 text-slate-500">No subscriptions found.</flux:table.cell></flux:table.row>
                 @endforelse
             </flux:table.rows>
         </flux:table>
@@ -63,11 +65,18 @@
             <p class="text-sm text-slate-500 mb-6">Administratively bypass automated billing limits by shifting cycles explicitly.</p>
             
             <div class="space-y-4 mb-6">
-                <flux:select label="Billing Cycle" wire:model="editType" required>
+                <flux:select label="Subscription Tier" wire:model="editType" required>
                     <option value="free">Free Plan</option>
                     <option value="daily">Daily Pass</option>
                     <option value="monthly">Growth Tier</option>
                     <option value="advanced">Scale Tier</option>
+                </flux:select>
+
+                <flux:select label="Billing Cycle" wire:model="editBillingCycle" required>
+                    <option value="free">Free</option>
+                    <option value="daily">Daily</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
                 </flux:select>
                 
                 <flux:select label="System Status" wire:model="editStatus" required>

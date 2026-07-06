@@ -16,6 +16,15 @@ class SubscriptionBilling extends Component
 {
     public string $billingCycle = 'monthly';
 
+    public function mount(): void
+    {
+        $business = auth()->user()?->getActiveBusiness();
+
+        if ($business) {
+            app(SubscriptionService::class)->ensureActiveOrFreeSubscription($business);
+        }
+    }
+
     public function subscribe(string $tier = 'free')
     {
         if (! auth()->user()->isOwner()) {
@@ -48,15 +57,14 @@ class SubscriptionBilling extends Component
         $label = $tierConfig['label'] ?? ucfirst($tier);
         $description = "QLine {$label} ".ucfirst($cycle)." Subscription for {$business->name}";
 
-        $sub = $this->createPendingSubscription($business->id, $tier, $cycle);
-
         if ($amount <= 0) {
-            app(SubscriptionService::class)->activateSubscription($sub);
+            app(SubscriptionService::class)->activateFreeSubscription($business);
             session()->flash('success', "{$label} plan activated. Your free queue is ready.");
 
             return;
         }
 
+        $sub = $this->createPendingSubscription($business->id, $tier, $cycle);
         $payment = $this->createPendingPayment($business->id, $sub->id, $amount);
 
         try {
@@ -79,7 +87,7 @@ class SubscriptionBilling extends Component
             ])
                 ->layout('layouts.app');
         }
-        $subscription = $business->subscription;
+        $subscription = app(SubscriptionService::class)->ensureActiveOrFreeSubscription($business);
         $payments = Payment::where('business_id', $business->id)->orderBy('created_at', 'desc')->limit(20)->get();
 
         return view('livewire.business.subscription-billing', [

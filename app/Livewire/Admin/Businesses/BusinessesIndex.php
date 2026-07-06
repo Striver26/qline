@@ -34,6 +34,8 @@ class BusinessesIndex extends Component
 
     public $editSubStatus = '';
 
+    public $editSubBillingCycle = 'free';
+
     public $editSubExpiresAt = '';
 
     public function manageSubscription($id)
@@ -45,11 +47,13 @@ class BusinessesIndex extends Component
         if ($sub) {
             $this->editSubType = $sub->type instanceof SubTier ? $sub->type->value : $sub->type;
             $this->editSubStatus = $sub->status;
+            $this->editSubBillingCycle = app(SubscriptionService::class)->billingCycleFor($this->editSubType, $sub->billing_cycle);
             $this->editSubExpiresAt = $sub->expires_at ? $sub->expires_at->format('Y-m-d\TH:i') : '';
         } else {
             $this->editSubType = SubTier::FREE->value;
-            $this->editSubStatus = 'pending';
-            $this->editSubExpiresAt = now()->addDays(1)->format('Y-m-d\TH:i');
+            $this->editSubStatus = 'active';
+            $this->editSubBillingCycle = 'free';
+            $this->editSubExpiresAt = '';
         }
 
         $this->dispatch('modal-show', name: 'manage-subscription');
@@ -60,32 +64,46 @@ class BusinessesIndex extends Component
         $this->validate([
             'editSubType' => ['required', 'string'],
             'editSubStatus' => ['required', 'string'],
-            'editSubExpiresAt' => ['required', 'date'],
+            'editSubBillingCycle' => ['required', 'string'],
+            'editSubExpiresAt' => ['nullable', 'date'],
         ]);
 
         $biz = Business::findOrFail($this->managingSubBizId);
+        $cycle = app(SubscriptionService::class)->billingCycleFor($this->editSubType, $this->editSubBillingCycle);
+        $status = $this->editSubType === SubTier::FREE->value ? 'active' : $this->editSubStatus;
+        $expiresAt = $cycle === 'free' ? null : ($this->editSubExpiresAt ?: null);
 
         $sub = $biz->subscription()->firstOrCreate(
             ['business_id' => $biz->id],
-            ['starts_at' => now(), 'type' => $this->editSubType, 'status' => 'pending', 'expires_at' => now()]
+            [
+                'starts_at' => now(),
+                'type' => $this->editSubType,
+                'billing_cycle' => $cycle,
+                'status' => $status,
+                'expires_at' => $expiresAt,
+            ]
         );
 
         $sub->update([
             'type' => $this->editSubType,
-            'status' => $this->editSubStatus,
-            'expires_at' => $this->editSubExpiresAt,
+            'billing_cycle' => $cycle,
+            'status' => $status,
+            'expires_at' => $expiresAt,
         ]);
 
-        if ($this->editSubStatus === 'active') {
+        if ($status === 'active') {
             app(SubscriptionService::class)->activateSubscription($sub);
             // Re-apply the manually chosen expiration date
-            $sub->update(['expires_at' => $this->editSubExpiresAt]);
+            if ($expiresAt) {
+                $sub->update(['expires_at' => $expiresAt]);
+            }
         }
 
         AdminAuditLog::record('business.subscription_update', $biz, [
             'new_type' => $this->editSubType,
-            'new_status' => $this->editSubStatus,
-            'new_expires_at' => $this->editSubExpiresAt,
+            'new_status' => $status,
+            'new_billing_cycle' => $cycle,
+            'new_expires_at' => $expiresAt,
         ]);
 
         $this->dispatch('modal-close', name: 'manage-subscription');
