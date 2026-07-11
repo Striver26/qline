@@ -2,10 +2,9 @@
 
 namespace App\Services\Analytics;
 
-use App\Models\Tenant\Business;
-use App\Models\Queue\QueueEntry;
 use App\Enums\QueueStatus;
-use Illuminate\Support\Facades\DB;
+use App\Models\Queue\QueueEntry;
+use App\Models\Tenant\Business;
 
 class QueueAnalyticsService
 {
@@ -14,7 +13,7 @@ class QueueAnalyticsService
         $totalEntries = $this->getTotalEntries($business->id);
         $completedEntries = $this->getCompletedEntries($business->id);
         $cancelledEntries = $this->getCancelledEntries($business->id);
-        
+
         $denominator = $completedEntries + $cancelledEntries;
         $completionRate = $denominator > 0 ? (int) round(($completedEntries / $denominator) * 100) : 0;
 
@@ -50,35 +49,38 @@ class QueueAnalyticsService
 
     private function getAverageWaitTime(int $businessId): int
     {
-        $avgWaitTime = QueueEntry::where('business_id', $businessId)
+        $avgSeconds = QueueEntry::where('business_id', $businessId)
             ->where('status', QueueStatus::COMPLETED->value)
             ->whereNotNull('called_at')
-            ->select(DB::raw('AVG(TIMESTAMPDIFF(SECOND, created_at, called_at)) as avg_wait'))
-            ->value('avg_wait');
+            ->select(['created_at', 'called_at'])
+            ->get()
+            ->avg(fn (QueueEntry $entry): int => $entry->called_at->diffInSeconds($entry->created_at));
 
-        return $avgWaitTime ? (int) round($avgWaitTime / 60) : 0;
+        return $avgSeconds ? (int) round($avgSeconds / 60) : 0;
     }
 
     private function getAverageServiceTime(int $businessId): int
     {
-        $avgServiceTime = QueueEntry::where('business_id', $businessId)
+        $avgSeconds = QueueEntry::where('business_id', $businessId)
             ->where('status', QueueStatus::COMPLETED->value)
             ->whereNotNull('called_at')
             ->whereNotNull('completed_at')
-            ->select(DB::raw('AVG(TIMESTAMPDIFF(SECOND, called_at, completed_at)) as avg_service'))
-            ->value('avg_service');
+            ->select(['called_at', 'completed_at'])
+            ->get()
+            ->avg(fn (QueueEntry $entry): int => $entry->completed_at->diffInSeconds($entry->called_at));
 
-        return $avgServiceTime ? (int) round($avgServiceTime / 60) : 0;
+        return $avgSeconds ? (int) round($avgSeconds / 60) : 0;
     }
 
     private function getBusiestHour(int $businessId): string
     {
         $busiestHour = QueueEntry::where('business_id', $businessId)
-            ->select(DB::raw('HOUR(created_at) as hour'), DB::raw('count(*) as count'))
-            ->groupBy('hour')
-            ->orderBy('count', 'desc')
+            ->pluck('created_at')
+            ->groupBy(fn ($createdAt) => $createdAt->format('H'))
+            ->sortByDesc(fn ($group) => $group->count())
+            ->keys()
             ->first();
 
-        return $busiestHour ? str_pad($busiestHour->hour, 2, '0', STR_PAD_LEFT) . ':00' : 'N/A';
+        return $busiestHour ? "{$busiestHour}:00" : 'N/A';
     }
 }
