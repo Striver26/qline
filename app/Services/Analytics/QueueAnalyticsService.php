@@ -54,7 +54,7 @@ class QueueAnalyticsService
             ->whereNotNull('called_at')
             ->select(['created_at', 'called_at'])
             ->get()
-            ->avg(fn (QueueEntry $entry): int => $entry->called_at->diffInSeconds($entry->created_at));
+            ->avg(fn (QueueEntry $entry): int => $entry->created_at->diffInSeconds($entry->called_at));
 
         return $avgSeconds ? (int) round($avgSeconds / 60) : 0;
     }
@@ -67,7 +67,7 @@ class QueueAnalyticsService
             ->whereNotNull('completed_at')
             ->select(['called_at', 'completed_at'])
             ->get()
-            ->avg(fn (QueueEntry $entry): int => $entry->completed_at->diffInSeconds($entry->called_at));
+            ->avg(fn (QueueEntry $entry): int => $entry->called_at->diffInSeconds($entry->completed_at));
 
         return $avgSeconds ? (int) round($avgSeconds / 60) : 0;
     }
