@@ -580,8 +580,8 @@
                         operations.</p>
                     <div class="flex items-baseline gap-1 mb-8 relative z-10">
                         <span class="text-sm text-teal-400/80">RM</span>
-                        <span data-price data-monthly-price="55" data-yearly-price="528"
-                            class="text-5xl font-black text-white tracking-tighter drop-shadow-lg">55</span>
+                        <span data-price data-monthly-price="69" data-yearly-price="662.00"
+                            class="text-5xl font-black text-white tracking-tighter drop-shadow-lg">69</span>
                         <span data-period data-monthly-period="mo" data-yearly-period="yr"
                             class="text-sm text-slate-400">/mo</span>
                     </div>
@@ -614,8 +614,8 @@
                     <p class="text-[13px] text-slate-400 mb-6 h-10">For enterprise organizations.</p>
                     <div class="flex items-baseline gap-1 mb-8">
                         <span class="text-sm text-slate-500">RM</span>
-                        <span data-price data-monthly-price="119" data-yearly-price="1,142.40"
-                            class="text-4xl font-bold text-white tracking-tight">119</span>
+                        <span data-price data-monthly-price="149" data-yearly-price="1,428.00"
+                            class="text-4xl font-bold text-white tracking-tight">149</span>
                         <span data-period data-monthly-period="mo" data-yearly-period="yr"
                             class="text-sm text-slate-500">/mo</span>
                     </div>
