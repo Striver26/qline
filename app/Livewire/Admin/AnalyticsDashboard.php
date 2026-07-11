@@ -5,7 +5,7 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use App\Models\Tenant\Business;
 use App\Models\Tenant\Payment;
-use App\Models\Marketing\WhatsAppMessage;
+use App\Models\Marketing\WhatsappMessage;
 use App\Models\Queue\QueueEntry;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +22,7 @@ class AnalyticsDashboard extends Component
         $queueVolume30d = QueueEntry::where('created_at', '>=', $thirtyDaysAgo)->count();
 
         // Messaging load
-        $messagesSent = WhatsAppMessage::where('status', 'sent')->count();
+        $messagesSent = WhatsappMessage::where('status', 'sent')->count();
 
         // Revenue (MRR) - Assuming monthly subscriptions.
         // Summing the active subscription plan prices. For simplicity, we just sum up total completed payments in last 30 days
