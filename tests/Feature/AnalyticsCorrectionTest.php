@@ -14,10 +14,6 @@ class AnalyticsCorrectionTest extends TestCase
 
     public function test_it_calculates_refined_metrics_correctly()
     {
-        if (DB::connection()->getDriverName() === 'sqlite') {
-            $this->markTestSkipped('Analytics service uses MySQL-specific functions (TIMESTAMPDIFF, HOUR). Run against MySQL.');
-        }
-
         $business = Business::create([
             'name' => 'Metric Biz',
             'slug' => 'metric-biz',
